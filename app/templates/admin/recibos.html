@@ -1,0 +1,889 @@
+{% extends "base.html" %}
+
+{% block title %}Recibos de Nómina - Administración{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Header Compacto - Homologado */
+    .page-header {
+        background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+        border-radius: 12px;
+        padding: 18px 24px;
+        color: white;
+        margin-bottom: 16px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .page-header::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -10%;
+        width: 200px;
+        height: 200px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 50%;
+    }
+    
+    .page-header h1 {
+        font-size: 20px;
+        font-weight: 700;
+        margin-bottom: 2px;
+        position: relative;
+        z-index: 1;
+    }
+    
+    .page-header p {
+        font-size: 13px;
+        opacity: 0.85;
+        position: relative;
+        z-index: 1;
+    }
+    
+    /* Stats Row */
+    .stats-row {
+        display: flex;
+        gap: 16px;
+        margin-bottom: 16px;
+    }
+    
+    .stat-card {
+        background: white;
+        border-radius: 10px;
+        padding: 14px 20px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        border: 1px solid var(--border);
+        min-width: 140px;
+    }
+    
+    .stat-icon {
+        width: 36px;
+        height: 36px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 16px;
+    }
+    
+    .stat-icon.green { background: rgba(16, 185, 129, 0.1); }
+    .stat-icon.blue { background: rgba(59, 130, 246, 0.1); }
+    .stat-icon.purple { background: rgba(139, 92, 246, 0.1); }
+    
+    .stat-value {
+        font-size: 22px;
+        font-weight: 700;
+        color: var(--text-primary);
+        line-height: 1;
+    }
+    
+    .stat-label {
+        font-size: 11px;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+    }
+    
+    /* Upload Zone */
+    .upload-section {
+        background: white;
+        border-radius: 12px;
+        border: 1px solid var(--border);
+        padding: 20px;
+        margin-bottom: 16px;
+    }
+    
+    .upload-section h3 {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: 16px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .upload-form {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr 1fr auto;
+        gap: 12px;
+        align-items: end;
+    }
+    
+    .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+    
+    .form-group label {
+        font-size: 11px;
+        font-weight: 600;
+        color: var(--text-secondary);
+        text-transform: uppercase;
+    }
+    
+    .form-group select,
+    .form-group input {
+        padding: 8px 12px;
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        font-size: 13px;
+    }
+    
+    .drop-zone {
+        border: 2px dashed var(--border);
+        border-radius: 8px;
+        padding: 20px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.2s;
+        background: #f8fafc;
+    }
+    
+    .drop-zone:hover,
+    .drop-zone.dragover {
+        border-color: #10b981;
+        background: rgba(16, 185, 129, 0.05);
+    }
+    
+    .drop-zone.has-file {
+        border-color: #10b981;
+        background: rgba(16, 185, 129, 0.1);
+    }
+    
+    .drop-zone-icon {
+        font-size: 32px;
+        margin-bottom: 8px;
+    }
+    
+    .drop-zone-text {
+        font-size: 13px;
+        color: var(--text-secondary);
+    }
+    
+    .drop-zone-text strong {
+        color: #10b981;
+    }
+    
+    .file-name {
+        font-size: 12px;
+        color: #10b981;
+        font-weight: 600;
+        margin-top: 8px;
+    }
+    
+    .btn-upload {
+        padding: 10px 20px;
+        background: linear-gradient(135deg, #059669, #10b981);
+        color: white;
+        border: none;
+        border-radius: 6px;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        transition: all 0.2s;
+    }
+    
+    .btn-upload:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+    }
+    
+    .btn-upload:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none;
+    }
+    
+    /* Filtros */
+    .filters-row {
+        display: flex;
+        gap: 12px;
+        margin-bottom: 16px;
+        flex-wrap: wrap;
+    }
+    
+    .filter-group {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .filter-group label {
+        font-size: 12px;
+        color: var(--text-secondary);
+    }
+    
+    .filter-group select {
+        padding: 6px 12px;
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        font-size: 12px;
+        background: white;
+    }
+    
+    /* Tabla */
+    .table-card {
+        background: white;
+        border-radius: 12px;
+        border: 1px solid var(--border);
+        overflow: hidden;
+    }
+    
+    .table-header {
+        padding: 12px 16px;
+        background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .table-header h3 {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--text-primary);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .data-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    
+    .data-table th {
+        background: #f8fafc;
+        padding: 10px 12px;
+        text-align: left;
+        font-size: 10px;
+        font-weight: 600;
+        color: var(--text-secondary);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .data-table td {
+        padding: 10px 12px;
+        border-top: 1px solid var(--border);
+        font-size: 12px;
+        color: var(--text-primary);
+    }
+    
+    .data-table tr:hover {
+        background: #f8fafc;
+    }
+    
+    .employee-cell {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .employee-avatar {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #059669, #10b981);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 11px;
+        font-weight: 600;
+    }
+    
+    .employee-name {
+        font-weight: 600;
+        font-size: 12px;
+    }
+    
+    .employee-email {
+        font-size: 10px;
+        color: var(--text-muted);
+    }
+    
+    .periodo-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 3px 8px;
+        border-radius: 10px;
+        font-size: 10px;
+        font-weight: 500;
+    }
+    
+    .periodo-badge.q1 {
+        background: rgba(59, 130, 246, 0.1);
+        color: #3b82f6;
+    }
+    
+    .periodo-badge.q2 {
+        background: rgba(139, 92, 246, 0.1);
+        color: #8b5cf6;
+    }
+    
+    .btn-download {
+        padding: 5px 10px;
+        background: rgba(16, 185, 129, 0.1);
+        color: #10b981;
+        border: none;
+        border-radius: 5px;
+        font-size: 11px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+    
+    .btn-download:hover {
+        background: rgba(16, 185, 129, 0.2);
+    }
+    
+    .btn-delete {
+        padding: 5px 10px;
+        background: rgba(239, 68, 68, 0.1);
+        color: #ef4444;
+        border: none;
+        border-radius: 5px;
+        font-size: 11px;
+        cursor: pointer;
+    }
+    
+    .btn-delete:hover {
+        background: rgba(239, 68, 68, 0.2);
+    }
+    
+    .actions-cell {
+        display: flex;
+        gap: 6px;
+    }
+    
+    /* Toast */
+    .toast {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        padding: 12px 20px;
+        border-radius: 8px;
+        color: white;
+        font-size: 13px;
+        font-weight: 500;
+        z-index: 1000;
+        transform: translateY(100px);
+        opacity: 0;
+        transition: all 0.3s;
+    }
+    
+    .toast.show {
+        transform: translateY(0);
+        opacity: 1;
+    }
+    
+    .toast.success { background: #10b981; }
+    .toast.error { background: #ef4444; }
+    
+    /* Empty State */
+    .empty-state {
+        text-align: center;
+        padding: 40px;
+        color: var(--text-muted);
+    }
+    
+    .empty-state-icon {
+        font-size: 48px;
+        margin-bottom: 12px;
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+        .upload-form {
+            grid-template-columns: 1fr;
+        }
+        
+        .stats-row {
+            flex-wrap: wrap;
+        }
+        
+        .filters-row {
+            flex-direction: column;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<div class="page-header">
+    <div>
+        <h1>💰 Recibos de Nómina</h1>
+        <p>Gestiona los recibos de nómina de los empleados</p>
+    </div>
+</div>
+
+<!-- Stats -->
+<div class="stats-row">
+    <div class="stat-card">
+        <div class="stat-icon green">📄</div>
+        <div>
+            <div class="stat-value" id="totalRecibos">0</div>
+            <div class="stat-label">Total Recibos</div>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon blue">📅</div>
+        <div>
+            <div class="stat-value" id="recibosAnio">0</div>
+            <div class="stat-label">Este Año</div>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon purple">📆</div>
+        <div>
+            <div class="stat-value" id="recibosMes">0</div>
+            <div class="stat-label">Este Mes</div>
+        </div>
+    </div>
+</div>
+
+<!-- Upload Section -->
+<div class="upload-section">
+    <h3>📤 Subir Nuevo Recibo</h3>
+    
+    <div class="upload-form">
+        <div class="form-group">
+            <label>Empleado</label>
+            <select id="empleadoSelect" required>
+                <option value="">Seleccionar...</option>
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label>Período</label>
+            <select id="periodoSelect" required>
+                <option value="1ra Quincena">1ra Quincena (día 15)</option>
+                <option value="2da Quincena">2da Quincena (día 30)</option>
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label>Mes</label>
+            <select id="mesSelect" required>
+                <option value="1">Enero</option>
+                <option value="2">Febrero</option>
+                <option value="3">Marzo</option>
+                <option value="4">Abril</option>
+                <option value="5">Mayo</option>
+                <option value="6">Junio</option>
+                <option value="7">Julio</option>
+                <option value="8">Agosto</option>
+                <option value="9">Septiembre</option>
+                <option value="10">Octubre</option>
+                <option value="11">Noviembre</option>
+                <option value="12">Diciembre</option>
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label>Año</label>
+            <select id="anioSelect" required>
+            </select>
+        </div>
+        
+        <button class="btn-upload" onclick="subirRecibo()" id="btnSubir" disabled>
+            <span>⬆️</span> Subir Recibo
+        </button>
+    </div>
+    
+    <div style="margin-top: 16px;">
+        <div class="drop-zone" id="dropZone">
+            <div class="drop-zone-icon">📁</div>
+            <div class="drop-zone-text">
+                Arrastra el PDF aquí o <strong>haz clic para seleccionar</strong>
+            </div>
+            <div class="file-name" id="fileName" style="display: none;"></div>
+        </div>
+        <input type="file" id="fileInput" accept=".pdf" style="display: none;">
+    </div>
+</div>
+
+<!-- Filtros -->
+<div class="filters-row">
+    <div class="filter-group">
+        <label>Filtrar por empleado:</label>
+        <select id="filtroEmpleado" onchange="cargarRecibos()">
+            <option value="">Todos</option>
+        </select>
+    </div>
+    <div class="filter-group">
+        <label>Año:</label>
+        <select id="filtroAnio" onchange="cargarRecibos()">
+        </select>
+    </div>
+    <div class="filter-group">
+        <label>Mes:</label>
+        <select id="filtroMes" onchange="cargarRecibos()">
+            <option value="">Todos</option>
+            <option value="1">Enero</option>
+            <option value="2">Febrero</option>
+            <option value="3">Marzo</option>
+            <option value="4">Abril</option>
+            <option value="5">Mayo</option>
+            <option value="6">Junio</option>
+            <option value="7">Julio</option>
+            <option value="8">Agosto</option>
+            <option value="9">Septiembre</option>
+            <option value="10">Octubre</option>
+            <option value="11">Noviembre</option>
+            <option value="12">Diciembre</option>
+        </select>
+    </div>
+</div>
+
+<!-- Tabla de Recibos -->
+<div class="table-card">
+    <div class="table-header">
+        <h3>📋 Lista de Recibos</h3>
+    </div>
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Empleado</th>
+                <th>Período</th>
+                <th>Mes</th>
+                <th>Año</th>
+                <th>Fecha Subida</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody id="recibosTableBody">
+            <tr>
+                <td colspan="6">
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📭</div>
+                        <p>No hay recibos registrados</p>
+                    </div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let empleados = [];
+let archivoSeleccionado = null;
+
+// Inicialización
+document.addEventListener('DOMContentLoaded', () => {
+    inicializarAnios();
+    cargarEmpleados();
+    cargarEstadisticas();
+    cargarRecibos();
+    configurarDropZone();
+    
+    // Seleccionar mes actual
+    document.getElementById('mesSelect').value = new Date().getMonth() + 1;
+});
+
+function inicializarAnios() {
+    const anioActual = new Date().getFullYear();
+    const anioSelect = document.getElementById('anioSelect');
+    const filtroAnio = document.getElementById('filtroAnio');
+    
+    // Años para subir (actual y anterior)
+    for (let a = anioActual; a >= anioActual - 2; a--) {
+        anioSelect.innerHTML += `<option value="${a}" ${a === anioActual ? 'selected' : ''}>${a}</option>`;
+    }
+    
+    // Años para filtrar
+    filtroAnio.innerHTML = '<option value="">Todos</option>';
+    for (let a = anioActual; a >= anioActual - 5; a--) {
+        filtroAnio.innerHTML += `<option value="${a}" ${a === anioActual ? 'selected' : ''}>${a}</option>`;
+    }
+}
+
+async function cargarEmpleados() {
+    try {
+        const response = await fetch('/api/empleados/?activo=true');
+        if (response.ok) {
+            empleados = await response.json();
+            
+            const empleadoSelect = document.getElementById('empleadoSelect');
+            const filtroEmpleado = document.getElementById('filtroEmpleado');
+            
+            empleados.forEach(emp => {
+                const option = `<option value="${emp.id}">${emp.nombre_completo}</option>`;
+                empleadoSelect.innerHTML += option;
+                filtroEmpleado.innerHTML += option;
+            });
+        }
+    } catch (error) {
+        console.error('Error:', error);
+    }
+}
+
+async function cargarEstadisticas() {
+    try {
+        const response = await fetch('/api/recibos/estadisticas');
+        if (response.ok) {
+            const stats = await response.json();
+            document.getElementById('totalRecibos').textContent = stats.total_recibos;
+            document.getElementById('recibosAnio').textContent = stats.recibos_anio_actual;
+            document.getElementById('recibosMes').textContent = stats.recibos_mes_actual;
+        }
+    } catch (error) {
+        console.error('Error:', error);
+    }
+}
+
+async function cargarRecibos() {
+    const empleadoId = document.getElementById('filtroEmpleado').value;
+    const anio = document.getElementById('filtroAnio').value;
+    const mes = document.getElementById('filtroMes').value;
+    
+    let url = '/api/recibos/?';
+    if (empleadoId) url += `empleado_id=${empleadoId}&`;
+    if (anio) url += `anio=${anio}&`;
+    if (mes) url += `mes=${mes}&`;
+    
+    try {
+        const response = await fetch(url);
+        if (response.ok) {
+            const recibos = await response.json();
+            renderizarRecibos(recibos);
+        }
+    } catch (error) {
+        console.error('Error:', error);
+    }
+}
+
+function renderizarRecibos(recibos) {
+    const tbody = document.getElementById('recibosTableBody');
+    
+    if (recibos.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="6">
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📭</div>
+                        <p>No hay recibos registrados</p>
+                    </div>
+                </td>
+            </tr>
+        `;
+        return;
+    }
+    
+    tbody.innerHTML = recibos.map(recibo => {
+        const iniciales = recibo.empleado_nombre ? 
+            recibo.empleado_nombre.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() : '??';
+        
+        const periodoClass = recibo.periodo.includes('1ra') ? 'q1' : 'q2';
+        const fechaSubida = recibo.fecha_subida ? 
+            new Date(recibo.fecha_subida).toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' }) : '-';
+        
+        return `
+            <tr>
+                <td>
+                    <div class="employee-cell">
+                        <div class="employee-avatar">${iniciales}</div>
+                        <div>
+                            <div class="employee-name">${recibo.empleado_nombre || 'Desconocido'}</div>
+                            <div class="employee-email">${recibo.empleado_email || ''}</div>
+                        </div>
+                    </div>
+                </td>
+                <td><span class="periodo-badge ${periodoClass}">${recibo.periodo}</span></td>
+                <td>${recibo.mes_nombre || recibo.mes}</td>
+                <td>${recibo.anio}</td>
+                <td>${fechaSubida}</td>
+                <td>
+                    <div class="actions-cell">
+                        <button class="btn-download" onclick="descargarRecibo(${recibo.id})">
+                            ⬇️ Descargar
+                        </button>
+                        <button class="btn-delete" onclick="eliminarRecibo(${recibo.id})">
+                            🗑️
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        `;
+    }).join('');
+}
+
+function configurarDropZone() {
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.getElementById('fileInput');
+    
+    dropZone.addEventListener('click', () => fileInput.click());
+    
+    dropZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropZone.classList.add('dragover');
+    });
+    
+    dropZone.addEventListener('dragleave', () => {
+        dropZone.classList.remove('dragover');
+    });
+    
+    dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZone.classList.remove('dragover');
+        
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            handleFile(files[0]);
+        }
+    });
+    
+    fileInput.addEventListener('change', (e) => {
+        if (e.target.files.length > 0) {
+            handleFile(e.target.files[0]);
+        }
+    });
+}
+
+function handleFile(file) {
+    if (!file.name.toLowerCase().endsWith('.pdf')) {
+        mostrarToast('Solo se permiten archivos PDF', 'error');
+        return;
+    }
+    
+    archivoSeleccionado = file;
+    
+    const dropZone = document.getElementById('dropZone');
+    const fileName = document.getElementById('fileName');
+    
+    dropZone.classList.add('has-file');
+    fileName.textContent = `📄 ${file.name}`;
+    fileName.style.display = 'block';
+    
+    document.getElementById('btnSubir').disabled = false;
+}
+
+async function subirRecibo() {
+    const empleadoId = document.getElementById('empleadoSelect').value;
+    const periodo = document.getElementById('periodoSelect').value;
+    const mes = document.getElementById('mesSelect').value;
+    const anio = document.getElementById('anioSelect').value;
+    
+    if (!empleadoId || !periodo || !mes || !anio) {
+        mostrarToast('Completa todos los campos', 'error');
+        return;
+    }
+    
+    if (!archivoSeleccionado) {
+        mostrarToast('Selecciona un archivo PDF', 'error');
+        return;
+    }
+    
+    const btnSubir = document.getElementById('btnSubir');
+    btnSubir.disabled = true;
+    btnSubir.innerHTML = '<span>⏳</span> Subiendo...';
+    
+    const formData = new FormData();
+    formData.append('archivo', archivoSeleccionado);
+    formData.append('empleado_id', empleadoId);
+    formData.append('periodo', periodo);
+    formData.append('mes', mes);
+    formData.append('anio', anio);
+    
+    try {
+        const response = await fetch('/api/recibos/subir', {
+            method: 'POST',
+            body: formData
+        });
+        
+        if (response.ok) {
+            mostrarToast('Recibo subido exitosamente', 'success');
+            limpiarFormulario();
+            cargarRecibos();
+            cargarEstadisticas();
+        } else {
+            const error = await response.json();
+            mostrarToast(error.detail || 'Error al subir recibo', 'error');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        mostrarToast('Error de conexión', 'error');
+    } finally {
+        btnSubir.disabled = false;
+        btnSubir.innerHTML = '<span>⬆️</span> Subir Recibo';
+    }
+}
+
+function limpiarFormulario() {
+    document.getElementById('empleadoSelect').value = '';
+    document.getElementById('fileInput').value = '';
+    archivoSeleccionado = null;
+    
+    const dropZone = document.getElementById('dropZone');
+    dropZone.classList.remove('has-file');
+    document.getElementById('fileName').style.display = 'none';
+    document.getElementById('btnSubir').disabled = true;
+}
+
+async function descargarRecibo(id) {
+    try {
+        const response = await fetch(`/api/recibos/descargar/${id}`);
+        if (response.ok) {
+            const data = await response.json();
+            window.open(data.url, '_blank');
+        } else {
+            mostrarToast('Error al obtener el recibo', 'error');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        mostrarToast('Error de conexión', 'error');
+    }
+}
+
+async function eliminarRecibo(id) {
+    if (!confirm('¿Estás seguro de eliminar este recibo?')) return;
+    
+    try {
+        const response = await fetch(`/api/recibos/${id}`, {
+            method: 'DELETE'
+        });
+        
+        if (response.ok) {
+            mostrarToast('Recibo eliminado', 'success');
+            cargarRecibos();
+            cargarEstadisticas();
+        } else {
+            mostrarToast('Error al eliminar', 'error');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        mostrarToast('Error de conexión', 'error');
+    }
+}
+
+function mostrarToast(mensaje, tipo) {
+    const toast = document.getElementById('toast');
+    toast.textContent = mensaje;
+    toast.className = `toast ${tipo} show`;
+    
+    setTimeout(() => {
+        toast.classList.remove('show');
+    }, 3000);
+}
+</script>
+{% endblock %}

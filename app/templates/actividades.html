@@ -1,0 +1,623 @@
+{% extends "base.html" %}
+
+{% block title %}Captura de Actividades - Intranet{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Page Header */
+    .page-header-card {
+        background: linear-gradient(135deg, #1e3a5f 0%, #0093b0 100%);
+        border-radius: 16px;
+        padding: 28px 32px;
+        color: white;
+        margin-bottom: 24px;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .page-header-card::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -10%;
+        width: 300px;
+        height: 300px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 50%;
+    }
+    
+    .page-header-card h1 {
+        font-size: 24px;
+        font-weight: 700;
+        margin-bottom: 4px;
+        position: relative;
+        z-index: 1;
+    }
+    
+    .page-header-card p {
+        opacity: 0.9;
+        font-size: 14px;
+        position: relative;
+        z-index: 1;
+    }
+    
+    /* Week Selector */
+    .week-selector-card {
+        background: white;
+        border-radius: 14px;
+        padding: 20px 24px;
+        border: 1px solid var(--border);
+        margin-bottom: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 24px;
+    }
+    
+    .week-nav-btn {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 20px;
+        background: var(--bg-main);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        color: var(--text-primary);
+        font-size: 13px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    
+    .week-nav-btn:hover {
+        background: var(--primary);
+        color: white;
+        border-color: var(--primary);
+    }
+    
+    .week-display {
+        text-align: center;
+    }
+    
+    .week-display-label {
+        font-size: 12px;
+        color: var(--text-secondary);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .week-display-date {
+        font-size: 18px;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-top: 4px;
+    }
+    
+    /* Activities Form Card */
+    .activities-card {
+        background: white;
+        border-radius: 14px;
+        border: 1px solid var(--border);
+        overflow: hidden;
+    }
+    
+    .activities-card-header {
+        padding: 16px 24px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background: linear-gradient(135deg, #1e3a5f, #3d5a73);
+        color: white;
+    }
+    
+    .activities-card-title {
+        font-size: 16px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        color: white;
+    }
+    
+    .activities-card-title span {
+        font-size: 20px;
+    }
+    
+    /* Table Styles */
+    .activities-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    
+    .activities-table th {
+        padding: 14px 16px;
+        font-size: 11px;
+        font-weight: 600;
+        color: var(--text-secondary);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        background: var(--bg-main);
+        text-align: left;
+        border-bottom: 1px solid var(--border);
+    }
+    
+    .activities-table td {
+        padding: 16px;
+        border-bottom: 1px solid var(--border-light);
+        vertical-align: middle;
+    }
+    
+    .activities-table tr:hover {
+        background: rgba(13, 148, 136, 0.02);
+    }
+    
+    .activities-table tr:last-child td {
+        border-bottom: none;
+    }
+    
+    /* Day Cell */
+    .day-cell {
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .day-name {
+        font-weight: 700;
+        color: #0093b0;
+        font-size: 14px;
+    }
+    
+    .day-date {
+        font-size: 12px;
+        color: var(--text-secondary);
+        margin-top: 2px;
+    }
+    
+    /* Input Styles */
+    .time-input-group {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+    
+    .time-input {
+        padding: 10px 12px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        font-size: 14px;
+        width: 110px;
+        text-align: center;
+        transition: all 0.2s;
+    }
+    
+    .time-input:focus {
+        outline: none;
+        border-color: #0093b0;
+        box-shadow: 0 0 0 3px rgba(0, 147, 176, 0.1);
+    }
+    
+    .desc-input {
+        width: 100%;
+        padding: 10px 14px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        font-size: 14px;
+        transition: all 0.2s;
+    }
+    
+    .desc-input:focus {
+        outline: none;
+        border-color: #0093b0;
+        box-shadow: 0 0 0 3px rgba(0, 147, 176, 0.1);
+    }
+    
+    .location-select {
+        padding: 10px 14px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        font-size: 14px;
+        min-width: 130px;
+        background: white;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    
+    .location-select:focus {
+        outline: none;
+        border-color: var(--primary);
+    }
+    
+    /* Hours Display */
+    .hours-display {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 60px;
+        height: 40px;
+        background: linear-gradient(135deg, #0093b0, #007a94);
+        color: white;
+        border-radius: 10px;
+        font-weight: 700;
+        font-size: 16px;
+    }
+    
+    /* Footer */
+    .activities-footer {
+        padding: 20px 24px;
+        background: var(--bg-main);
+        border-top: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+    
+    .total-hours {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+    
+    .total-hours-label {
+        font-size: 14px;
+        color: var(--text-secondary);
+    }
+    
+    .total-hours-value {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 12px 24px;
+        background: linear-gradient(135deg, #0093b0, #007a94);
+        color: white;
+        border-radius: 10px;
+        font-weight: 700;
+        font-size: 20px;
+    }
+    
+    .form-buttons {
+        display: flex;
+        gap: 12px;
+    }
+    
+    .btn-save {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 12px 28px;
+        background: linear-gradient(135deg, #0093b0, #007a94);
+        color: white;
+        border: none;
+        border-radius: 10px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    
+    .btn-save:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(0, 147, 176, 0.3);
+    }
+    
+    .btn-cancel {
+        padding: 12px 24px;
+        background: white;
+        color: var(--text-primary);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    
+    .btn-cancel:hover {
+        background: var(--bg-main);
+    }
+    
+    /* Status Message */
+    .status-toast {
+        position: fixed;
+        bottom: 24px;
+        right: 24px;
+        padding: 16px 24px;
+        border-radius: 12px;
+        font-size: 14px;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+        z-index: 1000;
+        transform: translateY(100px);
+        opacity: 0;
+        transition: all 0.3s ease;
+    }
+    
+    .status-toast.show {
+        transform: translateY(0);
+        opacity: 1;
+    }
+    
+    .status-toast.success {
+        background: #0093b0;
+        color: white;
+    }
+    
+    .status-toast.error {
+        background: #ef4444;
+        color: white;
+    }
+    
+    @media (max-width: 1024px) {
+        .activities-table {
+            display: block;
+            overflow-x: auto;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="page-header-card">
+    <h1>📅 Captura de Actividades</h1>
+    <p>Registra tus actividades diarias de la semana</p>
+</div>
+
+<!-- Week Selector -->
+<div class="week-selector-card">
+    <button class="week-nav-btn" onclick="cambiarSemana(-1)">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="15 18 9 12 15 6"></polyline>
+        </svg>
+        Anterior
+    </button>
+    
+    <div class="week-display">
+        <div class="week-display-label">Semana actual</div>
+        <div class="week-display-date" id="currentWeek">Cargando...</div>
+    </div>
+    
+    <button class="week-nav-btn" onclick="cambiarSemana(1)">
+        Siguiente
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="9 18 15 12 9 6"></polyline>
+        </svg>
+    </button>
+</div>
+
+<!-- Activities Form -->
+<form id="actividadesForm">
+    <div class="activities-card">
+        <div class="activities-card-header">
+            <h3 class="activities-card-title">
+                <span>📝</span> Registro de Horas
+            </h3>
+            <span style="font-size: 13px; color: var(--text-secondary);">Completa tu actividad diaria</span>
+        </div>
+        
+        <table class="activities-table">
+            <thead>
+                <tr>
+                    <th style="width: 140px;">Día</th>
+                    <th style="width: 120px;">Entrada</th>
+                    <th style="width: 120px;">Salida</th>
+                    <th>Descripción de actividades</th>
+                    <th style="width: 140px;">Ubicación</th>
+                    <th style="width: 80px; text-align: center;">Horas</th>
+                </tr>
+            </thead>
+            <tbody id="actividadesBody">
+                <!-- Se llena dinámicamente -->
+            </tbody>
+        </table>
+        
+        <div class="activities-footer">
+            <div class="total-hours">
+                <span class="total-hours-label">Total de horas de la semana:</span>
+                <div class="total-hours-value" id="totalHoras">0.0</div>
+            </div>
+            
+            <div class="form-buttons">
+                <button type="button" class="btn-cancel" onclick="cargarActividades()">Cancelar</button>
+                <button type="submit" class="btn-save">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                        <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                        <polyline points="7 3 7 8 15 8"></polyline>
+                    </svg>
+                    Guardar Actividades
+                </button>
+            </div>
+        </div>
+    </div>
+</form>
+
+<!-- Toast Notification -->
+<div class="status-toast" id="statusToast">
+    <span id="statusIcon">✓</span>
+    <span id="statusText">Mensaje</span>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let semanaActual = new Date();
+    let ubicaciones = [];
+    const diasSemana = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes'];
+    
+    function getLunes(fecha) {
+        const d = new Date(fecha);
+        const day = d.getDay();
+        const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+        return new Date(d.setDate(diff));
+    }
+    
+    function formatFecha(fecha) {
+        return fecha.toISOString().split('T')[0];
+    }
+    
+    function cambiarSemana(direccion) {
+        semanaActual.setDate(semanaActual.getDate() + (direccion * 7));
+        cargarActividades();
+    }
+    
+    function showToast(message, type = 'success') {
+        const toast = document.getElementById('statusToast');
+        const icon = document.getElementById('statusIcon');
+        const text = document.getElementById('statusText');
+        
+        toast.className = `status-toast ${type}`;
+        icon.textContent = type === 'success' ? '✓' : '✗';
+        text.textContent = message;
+        toast.classList.add('show');
+        
+        setTimeout(() => toast.classList.remove('show'), 3000);
+    }
+    
+    async function cargarUbicaciones() {
+        try {
+            const response = await fetch('/api/catalogos/ubicaciones');
+            if (response.ok) ubicaciones = await response.json();
+        } catch (error) {
+            console.error('Error:', error);
+        }
+    }
+    
+    function generarSelectUbicaciones(selectedId) {
+        let html = '<option value="">Seleccionar...</option>';
+        ubicaciones.forEach(ub => {
+            html += `<option value="${ub.id}" ${ub.id == selectedId ? 'selected' : ''}>${ub.codigo} - ${ub.nombre}</option>`;
+        });
+        return html;
+    }
+    
+    function calcularHoras(entrada, salida) {
+        if (!entrada || !salida) return 0;
+        const [hE, mE] = entrada.split(':').map(Number);
+        const [hS, mS] = salida.split(':').map(Number);
+        return Math.max(0, ((hS * 60 + mS) - (hE * 60 + mE)) / 60);
+    }
+    
+    function actualizarTotalHoras() {
+        let total = 0;
+        document.querySelectorAll('.horas-dia').forEach(el => {
+            total += parseFloat(el.textContent) || 0;
+        });
+        document.getElementById('totalHoras').textContent = total.toFixed(1);
+    }
+    
+    function onHoraChange(index) {
+        const entrada = document.getElementById(`entrada_${index}`).value;
+        const salida = document.getElementById(`salida_${index}`).value;
+        document.getElementById(`horas_${index}`).textContent = calcularHoras(entrada, salida).toFixed(1);
+        actualizarTotalHoras();
+    }
+    
+    async function cargarActividades() {
+        const lunes = getLunes(semanaActual);
+        const viernes = new Date(lunes);
+        viernes.setDate(viernes.getDate() + 4);
+        
+        document.getElementById('currentWeek').textContent = 
+            `${lunes.toLocaleDateString('es-MX', {day: '2-digit', month: 'short'})} al ${viernes.toLocaleDateString('es-MX', {day: '2-digit', month: 'short', year: 'numeric'})}`;
+        
+        let actividadesExistentes = {};
+        try {
+            const response = await fetch(`/api/actividades/semana?fecha=${formatFecha(lunes)}`);
+            if (response.ok) {
+                (await response.json()).forEach(act => actividadesExistentes[act.fecha] = act);
+            }
+        } catch (error) {}
+        
+        let html = '';
+        for (let i = 0; i < 5; i++) {
+            const fecha = new Date(lunes);
+            fecha.setDate(fecha.getDate() + i);
+            const fechaStr = formatFecha(fecha);
+            const act = actividadesExistentes[fechaStr] || {};
+            const horas = act.horas_trabajadas || calcularHoras(act.hora_entrada?.slice(0,5)||'09:00', act.hora_salida?.slice(0,5)||'18:00');
+            
+            html += `
+                <tr>
+                    <td>
+                        <div class="day-cell">
+                            <span class="day-name">${diasSemana[i]}</span>
+                            <span class="day-date">${fecha.toLocaleDateString('es-MX')}</span>
+                        </div>
+                        <input type="hidden" name="fecha_${i}" value="${fechaStr}">
+                    </td>
+                    <td>
+                        <input type="time" id="entrada_${i}" class="time-input" 
+                               value="${act.hora_entrada?.slice(0,5) || '09:00'}" 
+                               onchange="onHoraChange(${i})">
+                    </td>
+                    <td>
+                        <input type="time" id="salida_${i}" class="time-input" 
+                               value="${act.hora_salida?.slice(0,5) || '18:00'}" 
+                               onchange="onHoraChange(${i})">
+                    </td>
+                    <td>
+                        <input type="text" id="descripcion_${i}" class="desc-input" 
+                               value="${act.descripcion || ''}" 
+                               placeholder="Describe las actividades realizadas...">
+                    </td>
+                    <td>
+                        <select id="ubicacion_${i}" class="location-select">
+                            ${generarSelectUbicaciones(act.ubicacion_id)}
+                        </select>
+                    </td>
+                    <td style="text-align: center;">
+                        <div class="hours-display">
+                            <span id="horas_${i}" class="horas-dia">${parseFloat(horas).toFixed(1)}</span>
+                        </div>
+                    </td>
+                </tr>`;
+        }
+        document.getElementById('actividadesBody').innerHTML = html;
+        actualizarTotalHoras();
+    }
+    
+    document.getElementById('actividadesForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const lunes = getLunes(semanaActual);
+        const actividades = [];
+        const diasCodigo = ['L', 'M', 'X', 'J', 'V'];
+        
+        for (let i = 0; i < 5; i++) {
+            actividades.push({
+                fecha: document.querySelector(`[name="fecha_${i}"]`).value,
+                dia_semana: diasCodigo[i],
+                hora_entrada: document.getElementById(`entrada_${i}`).value || null,
+                hora_salida: document.getElementById(`salida_${i}`).value || null,
+                descripcion: document.getElementById(`descripcion_${i}`).value || null,
+                ubicacion_id: document.getElementById(`ubicacion_${i}`).value ? parseInt(document.getElementById(`ubicacion_${i}`).value) : null
+            });
+        }
+        
+        try {
+            const response = await fetch('/api/actividades/semana', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ semana_inicio: formatFecha(lunes), actividades })
+            });
+            
+            if (response.ok) {
+                showToast('Actividades guardadas correctamente', 'success');
+            } else {
+                const error = await response.json();
+                showToast(error.detail || 'Error al guardar', 'error');
+            }
+        } catch (error) {
+            showToast('Error de conexión', 'error');
+        }
+    });
+    
+    document.addEventListener('DOMContentLoaded', async () => {
+        await cargarUbicaciones();
+        await cargarActividades();
+    });
+</script>
+{% endblock %}

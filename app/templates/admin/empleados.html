@@ -1,0 +1,1532 @@
+{% extends "base.html" %}
+
+{% block title %}Gestión de Empleados - Administración{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Page Header Compacto */
+    .page-header-card {
+        background: linear-gradient(135deg, #1e3a5f 0%, #0093b0 100%);
+        border-radius: 12px;
+        padding: 18px 24px;
+        color: white;
+        margin-bottom: 16px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .page-header-card::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -10%;
+        width: 300px;
+        height: 300px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 50%;
+    }
+    
+    .page-header-card h1 {
+        font-size: 20px;
+        font-weight: 700;
+        margin-bottom: 2px;
+        position: relative;
+        z-index: 1;
+    }
+    
+    .page-header-card p {
+        opacity: 0.85;
+        font-size: 13px;
+        position: relative;
+        z-index: 1;
+    }
+    
+    .btn-add {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 20px;
+        background: rgba(255, 255, 255, 0.2);
+        color: white;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        border-radius: 8px;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+        position: relative;
+        z-index: 1;
+    }
+    
+    .btn-add:hover {
+        background: rgba(255, 255, 255, 0.3);
+        transform: translateY(-1px);
+    }
+    
+    /* Stats Row */
+    .stats-row {
+        display: flex;
+        gap: 16px;
+        margin-bottom: 16px;
+    }
+    
+    .stat-card {
+        background: white;
+        border-radius: 10px;
+        padding: 14px 20px;
+        border: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        min-width: 140px;
+    }
+    
+    .stat-icon {
+        width: 36px;
+        height: 36px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 16px;
+    }
+    
+    .stat-icon.total { background: rgba(0, 147, 176, 0.1); }
+    .stat-icon.active { background: rgba(16, 185, 129, 0.1); }
+    .stat-icon.admin { background: rgba(139, 92, 246, 0.1); }
+    
+    .stat-value {
+        font-size: 22px;
+        font-weight: 700;
+        color: var(--text-primary);
+        line-height: 1;
+    }
+    
+    .stat-label {
+        font-size: 11px;
+        color: var(--text-muted);
+        text-transform: uppercase;
+    }
+        z-index: 1;
+    }
+    
+    .btn-add:hover {
+        background: rgba(255, 255, 255, 0.3);
+        transform: translateY(-1px);
+    }
+    
+    /* Table Card */
+    .table-card {
+        background: white;
+        border-radius: 14px;
+        border: 1px solid var(--border);
+        overflow: hidden;
+    }
+    
+    .table-card-header {
+        padding: 12px 20px;
+        background: linear-gradient(135deg, #1e3a5f, #3d5a73);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+    
+    .table-card-title {
+        font-size: 14px;
+        font-weight: 600;
+        color: white;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .search-box {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 12px;
+        border: 1px solid rgba(255,255,255,0.2);
+        border-radius: 6px;
+        background: rgba(255,255,255,0.1);
+    }
+    
+    .search-box input {
+        border: none;
+        background: transparent;
+        outline: none;
+        font-size: 13px;
+        color: white;
+        width: 180px;
+    }
+    
+    .search-box input::placeholder {
+        color: rgba(255,255,255,0.6);
+    }
+    
+    /* Table Compacta */
+    .data-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    
+    .data-table th {
+        padding: 10px 12px;
+        font-size: 10px;
+        font-weight: 600;
+        color: var(--text-secondary);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        background: var(--bg-main);
+        text-align: left;
+        border-bottom: 1px solid var(--border);
+    }
+    
+    .data-table td {
+        padding: 8px 12px;
+        font-size: 12px;
+        border-bottom: 1px solid var(--border-light);
+    }
+    
+    .data-table tr:hover {
+        background: var(--bg-light);
+    }
+    
+    .data-table tr.clickable-row {
+        cursor: pointer;
+    }
+    
+    .data-table tr.clickable-row:hover {
+        background: #e0f7fa;
+    }
+    
+    /* Employee Cell Compacto */
+    .employee-cell {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .employee-avatar {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #0093b0, #007a94);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 11px;
+        font-weight: 600;
+        flex-shrink: 0;
+    }
+    
+    .employee-info {
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+    }
+    
+    .employee-name {
+        font-weight: 600;
+        color: var(--text-primary);
+        font-size: 12px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    
+    .employee-email {
+        font-size: 10px;
+        color: var(--text-muted);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    
+    /* Badges Compactos */
+    .badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 2px 8px;
+        border-radius: 12px;
+        font-size: 10px;
+        font-weight: 500;
+    }
+    
+    .badge-admin {
+        background: rgba(139, 92, 246, 0.1);
+        color: #8b5cf6;
+    }
+    
+    .badge-user {
+        background: rgba(107, 114, 128, 0.1);
+        color: #6b7280;
+    }
+    
+    .badge-active {
+        background: rgba(16, 185, 129, 0.1);
+        color: #10b981;
+    }
+    
+    .badge-inactive {
+        background: rgba(239, 68, 68, 0.1);
+        color: #ef4444;
+    }
+    
+    /* Actions Compactas */
+    .actions-cell {
+        display: flex;
+        gap: 4px;
+    }
+    
+    .btn-icon {
+        width: 28px;
+        height: 28px;
+        border: none;
+        background: var(--bg-main);
+        border-radius: 6px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+        transition: all 0.2s;
+    }
+    
+    .btn-icon:hover {
+        background: var(--bg-light);
+    }
+    
+    .btn-icon.delete:hover {
+        background: #fee2e2;
+    }
+    
+    /* Ficha de Empleado Modal - Estilo Expediente Minimalista */
+    .ficha-modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0,0,0,0.5);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+        padding: 20px;
+    }
+    
+    .ficha-modal.show {
+        display: flex;
+    }
+    
+    .ficha-container {
+        background: white;
+        border-radius: 12px;
+        width: 100%;
+        max-width: 600px;
+        max-height: 90vh;
+        overflow-y: auto;
+        box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+    }
+    
+    .ficha-header {
+        background: linear-gradient(135deg, #1e3a5f 0%, #0093b0 100%);
+        padding: 16px 24px;
+        color: white;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .ficha-header-left {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+    }
+    
+    .ficha-avatar {
+        width: 48px;
+        height: 48px;
+        border-radius: 10px;
+        background: rgba(255,255,255,0.2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+        font-weight: 700;
+    }
+    
+    .ficha-title-area h2 {
+        font-size: 18px;
+        font-weight: 700;
+        margin-bottom: 2px;
+    }
+    
+    .ficha-subtitle {
+        font-size: 12px;
+        opacity: 0.9;
+    }
+    
+    .ficha-close {
+        background: rgba(255,255,255,0.2);
+        border: none;
+        color: white;
+        width: 36px;
+        height: 36px;
+        border-radius: 8px;
+        font-size: 20px;
+        cursor: pointer;
+    }
+    
+    .ficha-close:hover {
+        background: rgba(255,255,255,0.3);
+    }
+    
+    .ficha-body {
+        padding: 0;
+    }
+    
+    /* Secciones del expediente */
+    .expediente-section {
+        border-bottom: 1px solid var(--border);
+    }
+    
+    .expediente-section:last-child {
+        border-bottom: none;
+    }
+    
+    .expediente-section-header {
+        background: #f8fafc;
+        padding: 8px 24px;
+        font-size: 11px;
+        font-weight: 700;
+        color: #1e3a5f;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        border-bottom: 1px solid var(--border);
+    }
+    
+    .expediente-content {
+        padding: 0;
+    }
+    
+    .expediente-row {
+        display: flex;
+        border-bottom: 1px solid #f1f5f9;
+        padding: 8px 24px;
+    }
+    
+    .expediente-row:last-child {
+        border-bottom: none;
+    }
+    
+    .expediente-label {
+        width: 130px;
+        font-size: 12px;
+        color: var(--text-muted);
+        flex-shrink: 0;
+    }
+    
+    .expediente-value {
+        flex: 1;
+        font-size: 13px;
+        color: var(--text-primary);
+        font-weight: 500;
+    }
+    
+    .expediente-value.highlight {
+        color: #0093b0;
+    }
+    
+    /* Badges inline */
+    .expediente-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 3px 10px;
+        border-radius: 4px;
+        font-size: 12px;
+        font-weight: 500;
+    }
+    
+    .expediente-badge.admin {
+        background: rgba(139, 92, 246, 0.1);
+        color: #8b5cf6;
+    }
+    
+    .expediente-badge.user {
+        background: rgba(107, 114, 128, 0.1);
+        color: #6b7280;
+    }
+    
+    .expediente-badge.active {
+        background: rgba(16, 185, 129, 0.1);
+        color: #10b981;
+    }
+    
+    .expediente-badge.inactive {
+        background: rgba(239, 68, 68, 0.1);
+        color: #ef4444;
+    }
+    
+    /* Equipos lista compacta */
+    .expediente-equipos {
+        padding: 8px 24px;
+    }
+    
+    .equipo-item-mini {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 6px 10px;
+        background: #f8fafc;
+        border-radius: 6px;
+        margin-bottom: 6px;
+        font-size: 12px;
+    }
+    
+    .equipo-item-mini:last-child {
+        margin-bottom: 0;
+    }
+    
+    .equipo-item-mini .equipo-icon {
+        font-size: 14px;
+    }
+    
+    .equipo-item-mini .equipo-desc {
+        flex: 1;
+        color: var(--text-primary);
+    }
+    
+    .equipo-item-mini .equipo-serie {
+        font-size: 10px;
+        color: var(--text-muted);
+    }
+    
+    .expediente-empty {
+        padding: 12px 24px;
+        text-align: center;
+        color: var(--text-muted);
+        font-size: 12px;
+    }
+    
+    /* Footer de ficha */
+    .ficha-footer {
+        display: flex;
+        gap: 10px;
+        padding: 12px 24px;
+        background: #f8fafc;
+        border-top: 1px solid var(--border);
+    }
+    
+    .ficha-btn {
+        flex: 1;
+        padding: 8px 14px;
+        border-radius: 6px;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        transition: all 0.2s;
+    }
+    
+    .ficha-btn-edit {
+        background: linear-gradient(135deg, #0093b0, #007a94);
+        color: white;
+        border: none;
+    }
+    
+    .ficha-btn-edit:hover {
+        box-shadow: 0 4px 12px rgba(0, 147, 176, 0.3);
+    }
+    
+    .ficha-btn-close {
+        background: white;
+        color: var(--text-secondary);
+        border: 1px solid var(--border);
+    }
+    
+    /* Modal */
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+    }
+    
+    .modal-overlay.show {
+        display: flex;
+    }
+    
+    .modal {
+        background: white;
+        border-radius: 16px;
+        width: 100%;
+        max-width: 600px;
+        max-height: 90vh;
+        overflow-y: auto;
+    }
+    
+    .modal-header {
+        padding: 20px 24px;
+        background: linear-gradient(135deg, #1e3a5f, #3d5a73);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+    
+    .modal-header h3 {
+        font-size: 18px;
+        font-weight: 600;
+    }
+    
+    .modal-close {
+        background: none;
+        border: none;
+        color: white;
+        font-size: 24px;
+        cursor: pointer;
+        opacity: 0.8;
+    }
+    
+    .modal-close:hover {
+        opacity: 1;
+    }
+    
+    .modal-body {
+        padding: 24px;
+    }
+    
+    .modal-footer {
+        padding: 16px 24px;
+        border-top: 1px solid var(--border);
+        display: flex;
+        justify-content: flex-end;
+        gap: 12px;
+    }
+    
+    /* Form Styles */
+    .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+        margin-bottom: 16px;
+    }
+    
+    .form-row.single {
+        grid-template-columns: 1fr;
+    }
+    
+    .form-group {
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .form-label {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: 6px;
+    }
+    
+    .form-label .required {
+        color: #ef4444;
+    }
+    
+    .form-input,
+    .form-select {
+        padding: 10px 14px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        font-size: 14px;
+        transition: all 0.2s;
+    }
+    
+    .form-input:focus,
+    .form-select:focus {
+        outline: none;
+        border-color: #0093b0;
+        box-shadow: 0 0 0 3px rgba(0, 147, 176, 0.1);
+    }
+    
+    .form-check {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-top: 8px;
+    }
+    
+    .form-check input {
+        width: 18px;
+        height: 18px;
+        accent-color: #0093b0;
+    }
+    
+    .form-check label {
+        font-size: 14px;
+        color: var(--text-secondary);
+    }
+    
+    /* Section Divider para cambio de contraseña */
+    .section-divider {
+        display: flex;
+        align-items: center;
+        margin: 20px 0 16px 0;
+        padding-top: 16px;
+        border-top: 1px dashed var(--border);
+    }
+    
+    .section-divider span {
+        font-size: 13px;
+        font-weight: 600;
+        color: #1e3a5f;
+        background: white;
+    }
+    
+    .form-help {
+        font-size: 11px;
+        color: var(--text-muted);
+        margin-top: 4px;
+    }
+    
+    .btn-cancel {
+        padding: 10px 20px;
+        background: var(--bg-main);
+        color: var(--text-secondary);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+    }
+    
+    .btn-save {
+        padding: 10px 20px;
+        background: linear-gradient(135deg, #0093b0, #007a94);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+    }
+    
+    .btn-save:hover {
+        box-shadow: 0 4px 12px rgba(0, 147, 176, 0.3);
+    }
+    
+    .btn-save:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+    
+    /* Toast */
+    .toast {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        padding: 16px 24px;
+        border-radius: 10px;
+        color: white;
+        font-weight: 500;
+        z-index: 2000;
+        display: none;
+        animation: slideIn 0.3s ease;
+    }
+    
+    .toast.show { display: block; }
+    .toast.success { background: #10b981; }
+    .toast.error { background: #ef4444; }
+    
+    @keyframes slideIn {
+        from { transform: translateX(100%); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
+    }
+    
+    /* Empty State */
+    .empty-state {
+        padding: 60px 20px;
+        text-align: center;
+    }
+    
+    .empty-state-icon {
+        font-size: 48px;
+        margin-bottom: 16px;
+        opacity: 0.5;
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+        .page-header-card {
+            flex-direction: column;
+            gap: 16px;
+            text-align: center;
+        }
+        
+        .stats-row {
+            flex-wrap: wrap;
+        }
+        
+        .form-row {
+            grid-template-columns: 1fr;
+        }
+        
+        .data-table {
+            font-size: 13px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="page-header-card">
+    <div>
+        <h1>👥 Gestión de Empleados</h1>
+        <p>Administra los usuarios del sistema</p>
+    </div>
+    <button class="btn-add" onclick="abrirModalNuevo()">
+        <span>➕</span> Nuevo Empleado
+    </button>
+</div>
+
+<!-- Stats -->
+<div class="stats-row">
+    <div class="stat-card">
+        <div class="stat-icon total">👥</div>
+        <div>
+            <div class="stat-value" id="totalEmpleados">0</div>
+            <div class="stat-label">Total</div>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon active">✅</div>
+        <div>
+            <div class="stat-value" id="empleadosActivos">0</div>
+            <div class="stat-label">Activos</div>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon admin">👑</div>
+        <div>
+            <div class="stat-value" id="empleadosAdmin">0</div>
+            <div class="stat-label">Admins</div>
+        </div>
+    </div>
+</div>
+
+<!-- Table -->
+<div class="table-card">
+    <div class="table-card-header">
+        <h3 class="table-card-title">
+            <span>📋</span> Lista de Empleados
+        </h3>
+        <div class="search-box">
+            <span>🔍</span>
+            <input type="text" id="searchInput" placeholder="Buscar empleado...">
+        </div>
+    </div>
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Empleado</th>
+                <th>Puesto</th>
+                <th>Supervisor</th>
+                <th>Proyecto</th>
+                <th>Vacaciones</th>
+                <th>Rol</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody id="empleadosTableBody">
+            <tr>
+                <td colspan="8">
+                    <div class="empty-state">
+                        <div class="empty-state-icon">👥</div>
+                        <p>Cargando empleados...</p>
+                    </div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+<!-- Modal Nuevo/Editar Empleado -->
+<div class="modal-overlay" id="modalEmpleado">
+    <div class="modal">
+        <div class="modal-header">
+            <h3 id="modalTitle">Nuevo Empleado</h3>
+            <button class="modal-close" onclick="cerrarModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <form id="formEmpleado">
+                <input type="hidden" id="empleadoId">
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Nombre <span class="required">*</span></label>
+                        <input type="text" id="nombre" class="form-input" required placeholder="Nombre(s)">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Apellidos <span class="required">*</span></label>
+                        <input type="text" id="apellidos" class="form-input" required placeholder="Apellido paterno y materno">
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Correo electrónico <span class="required">*</span></label>
+                        <input type="email" id="email" class="form-input" required placeholder="correo@empresa.com">
+                    </div>
+                    <div class="form-group" id="passwordGroup">
+                        <label class="form-label">Contraseña <span class="required">*</span></label>
+                        <input type="password" id="password" class="form-input" placeholder="Mínimo 6 caracteres">
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Puesto</label>
+                        <select id="puesto_id" class="form-select">
+                            <option value="">Seleccionar puesto...</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Supervisor</label>
+                        <select id="supervisor_id" class="form-select">
+                            <option value="">Seleccionar supervisor...</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Proyecto</label>
+                        <select id="proyecto_id" class="form-select">
+                            <option value="">Seleccionar proyecto...</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Fecha de ingreso <span class="required">*</span></label>
+                        <input type="date" id="fecha_ingreso" class="form-input" required>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Días de vacaciones</label>
+                        <input type="number" id="dias_vacaciones" class="form-input" value="0" min="0" step="0.5">
+                    </div>
+                    <div class="form-group">
+                        <div class="form-check">
+                            <input type="checkbox" id="es_admin">
+                            <label for="es_admin">Es administrador</label>
+                        </div>
+                        <div class="form-check" id="activoGroup" style="display: none;">
+                            <input type="checkbox" id="activo" checked>
+                            <label for="activo">Empleado activo</label>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Sección Cambiar Contraseña (solo en edición) -->
+                <div id="cambiarPasswordSection" style="display: none;">
+                    <div class="section-divider">
+                        <span>🔐 Cambiar Contraseña</span>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Nueva contraseña</label>
+                            <input type="password" id="nuevaPassword" class="form-input" placeholder="Dejar vacío para no cambiar">
+                            <small class="form-help">Mínimo 6 caracteres. Solo completar si desea cambiar la contraseña.</small>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Confirmar contraseña</label>
+                            <input type="password" id="confirmarPassword" class="form-input" placeholder="Repetir nueva contraseña">
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-cancel" onclick="cerrarModal()">Cancelar</button>
+            <button class="btn-save" onclick="guardarEmpleado()" id="btnGuardar">Guardar</button>
+        </div>
+    </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<!-- Modal Ficha de Empleado - Estilo Expediente -->
+<div class="ficha-modal" id="fichaEmpleado">
+    <div class="ficha-container">
+        <div class="ficha-header">
+            <div class="ficha-header-left">
+                <div class="ficha-avatar" id="fichaAvatar">EA</div>
+                <div class="ficha-title-area">
+                    <h2 id="fichaNombre">Nombre del Empleado</h2>
+                    <div class="ficha-subtitle">Expediente de Empleado</div>
+                </div>
+            </div>
+            <button class="ficha-close" onclick="cerrarFicha()">&times;</button>
+        </div>
+        
+        <div class="ficha-body">
+            <!-- Datos Personales -->
+            <div class="expediente-section">
+                <div class="expediente-section-header">Datos Personales</div>
+                <div class="expediente-content">
+                    <div class="expediente-row">
+                        <div class="expediente-label">Nombre Completo</div>
+                        <div class="expediente-value" id="fichaExpNombre">-</div>
+                    </div>
+                    <div class="expediente-row">
+                        <div class="expediente-label">Correo Electrónico</div>
+                        <div class="expediente-value highlight" id="fichaExpEmail">-</div>
+                    </div>
+                    <div class="expediente-row">
+                        <div class="expediente-label">Rol</div>
+                        <div class="expediente-value" id="fichaExpRol">
+                            <span class="expediente-badge user">Usuario</span>
+                        </div>
+                    </div>
+                    <div class="expediente-row">
+                        <div class="expediente-label">Estado</div>
+                        <div class="expediente-value" id="fichaExpEstado">
+                            <span class="expediente-badge active">Activo</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Datos Laborales -->
+            <div class="expediente-section">
+                <div class="expediente-section-header">Datos Laborales</div>
+                <div class="expediente-content">
+                    <div class="expediente-row">
+                        <div class="expediente-label">Puesto</div>
+                        <div class="expediente-value" id="fichaExpPuesto">-</div>
+                    </div>
+                    <div class="expediente-row">
+                        <div class="expediente-label">Supervisor</div>
+                        <div class="expediente-value" id="fichaExpSupervisor">-</div>
+                    </div>
+                    <div class="expediente-row">
+                        <div class="expediente-label">Proyecto</div>
+                        <div class="expediente-value" id="fichaExpProyecto">-</div>
+                    </div>
+                    <div class="expediente-row">
+                        <div class="expediente-label">Fecha de Ingreso</div>
+                        <div class="expediente-value" id="fichaExpIngreso">-</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Vacaciones -->
+            <div class="expediente-section">
+                <div class="expediente-section-header">Vacaciones</div>
+                <div class="expediente-content">
+                    <div class="expediente-row">
+                        <div class="expediente-label">Días Disponibles</div>
+                        <div class="expediente-value highlight" id="fichaExpVacaciones" style="font-size: 18px; font-weight: 700;">0 días</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Equipos Asignados -->
+            <div class="expediente-section">
+                <div class="expediente-section-header">Equipos Asignados</div>
+                <div class="expediente-equipos" id="fichaExpEquipos">
+                    <div class="expediente-empty">Cargando equipos...</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="ficha-footer">
+            <button class="ficha-btn ficha-btn-close" onclick="cerrarFicha()">Cerrar</button>
+            <button class="ficha-btn ficha-btn-edit" onclick="editarDesdeficah()">✏️ Editar</button>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let empleados = [];
+let catalogos = { puestos: [], supervisores: [], proyectos: [] };
+let modoEdicion = false;
+
+// Cargar datos iniciales
+document.addEventListener('DOMContentLoaded', async () => {
+    await cargarCatalogos();
+    await cargarEmpleados();
+    
+    // Búsqueda
+    document.getElementById('searchInput').addEventListener('input', renderizarTabla);
+});
+
+async function cargarCatalogos() {
+    try {
+        const [puestos, supervisores, proyectos] = await Promise.all([
+            fetch('/api/catalogos/puestos').then(r => r.json()),
+            fetch('/api/catalogos/supervisores').then(r => r.json()),
+            fetch('/api/catalogos/proyectos').then(r => r.json())
+        ]);
+        
+        catalogos.puestos = puestos;
+        catalogos.supervisores = supervisores;
+        catalogos.proyectos = proyectos;
+        
+        // Llenar selects
+        llenarSelect('puesto_id', puestos, 'nombre');
+        llenarSelect('supervisor_id', supervisores, 'nombre');
+        llenarSelect('proyecto_id', proyectos, 'nombre');
+    } catch (error) {
+        console.error('Error cargando catálogos:', error);
+    }
+}
+
+function llenarSelect(id, items, campo) {
+    const select = document.getElementById(id);
+    const firstOption = select.options[0].outerHTML;
+    select.innerHTML = firstOption;
+    items.forEach(item => {
+        if (item.activo !== false) {
+            select.innerHTML += `<option value="${item.id}">${item[campo]}</option>`;
+        }
+    });
+}
+
+async function cargarEmpleados() {
+    try {
+        const response = await fetch('/api/empleados/?activo=true');
+        if (response.ok) {
+            empleados = await response.json();
+            actualizarEstadisticas();
+            renderizarTabla();
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        mostrarToast('Error al cargar empleados', 'error');
+    }
+}
+
+function actualizarEstadisticas() {
+    document.getElementById('totalEmpleados').textContent = empleados.length;
+    document.getElementById('empleadosActivos').textContent = empleados.filter(e => e.activo).length;
+    document.getElementById('empleadosAdmin').textContent = empleados.filter(e => e.es_admin).length;
+}
+
+function renderizarTabla() {
+    const tbody = document.getElementById('empleadosTableBody');
+    const busqueda = document.getElementById('searchInput').value.toLowerCase();
+    
+    let empleadosFiltrados = empleados;
+    
+    if (busqueda) {
+        empleadosFiltrados = empleados.filter(e => 
+            e.nombre_completo.toLowerCase().includes(busqueda) ||
+            e.email.toLowerCase().includes(busqueda) ||
+            (e.puesto || '').toLowerCase().includes(busqueda)
+        );
+    }
+    
+    if (empleadosFiltrados.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="8">
+                    <div class="empty-state">
+                        <div class="empty-state-icon">👥</div>
+                        <p>No se encontraron empleados</p>
+                    </div>
+                </td>
+            </tr>`;
+        return;
+    }
+    
+    tbody.innerHTML = empleadosFiltrados.map(emp => {
+        const initials = emp.nombre_completo.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+        
+        return `
+            <tr class="clickable-row" onclick="verFichaEmpleado('${emp.id}')">
+                <td>
+                    <div class="employee-cell">
+                        <div class="employee-avatar">${initials}</div>
+                        <div class="employee-info">
+                            <span class="employee-name">${emp.nombre_completo}</span>
+                            <span class="employee-email">${emp.email}</span>
+                        </div>
+                    </div>
+                </td>
+                <td>${emp.puesto || '-'}</td>
+                <td>${emp.supervisor || '-'}</td>
+                <td>${emp.proyecto || '-'}</td>
+                <td>${emp.dias_vacaciones} días</td>
+                <td>
+                    <span class="badge ${emp.es_admin ? 'badge-admin' : 'badge-user'}">
+                        ${emp.es_admin ? '👑 Admin' : '👤 Usuario'}
+                    </span>
+                </td>
+                <td>
+                    <span class="badge ${emp.activo ? 'badge-active' : 'badge-inactive'}">
+                        ${emp.activo ? '✅ Activo' : '❌ Inactivo'}
+                    </span>
+                </td>
+                <td>
+                    <div class="actions-cell" onclick="event.stopPropagation()">
+                        <button class="btn-icon" onclick="editarEmpleado('${emp.id}')" title="Editar">
+                            ✏️
+                        </button>
+                        <button class="btn-icon delete" onclick="desactivarEmpleado('${emp.id}')" title="Desactivar">
+                            🗑️
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        `;
+    }).join('');
+}
+
+// Modal funciones
+function abrirModalNuevo() {
+    modoEdicion = false;
+    document.getElementById('modalTitle').textContent = 'Nuevo Empleado';
+    document.getElementById('formEmpleado').reset();
+    document.getElementById('empleadoId').value = '';
+    document.getElementById('passwordGroup').style.display = 'block';
+    document.getElementById('password').required = true;
+    document.getElementById('activoGroup').style.display = 'none';
+    document.getElementById('cambiarPasswordSection').style.display = 'none';
+    document.getElementById('fecha_ingreso').value = new Date().toISOString().split('T')[0];
+    document.getElementById('modalEmpleado').classList.add('show');
+}
+
+function cerrarModal() {
+    document.getElementById('modalEmpleado').classList.remove('show');
+    // Limpiar campos de contraseña
+    document.getElementById('nuevaPassword').value = '';
+    document.getElementById('confirmarPassword').value = '';
+}
+
+function editarEmpleado(id) {
+    const emp = empleados.find(e => e.id === id);
+    if (!emp) return;
+    
+    modoEdicion = true;
+    document.getElementById('modalTitle').textContent = 'Editar Empleado';
+    document.getElementById('empleadoId').value = emp.id;
+    document.getElementById('nombre').value = emp.nombre_completo.split(' ')[0] || '';
+    document.getElementById('apellidos').value = emp.nombre_completo.split(' ').slice(1).join(' ') || '';
+    document.getElementById('email').value = emp.email;
+    document.getElementById('passwordGroup').style.display = 'none';
+    document.getElementById('password').required = false;
+    document.getElementById('cambiarPasswordSection').style.display = 'block';
+    document.getElementById('nuevaPassword').value = '';
+    document.getElementById('confirmarPassword').value = '';
+    
+    // Buscar IDs de catálogos
+    const puesto = catalogos.puestos.find(p => p.nombre === emp.puesto);
+    const supervisor = catalogos.supervisores.find(s => s.nombre === emp.supervisor);
+    const proyecto = catalogos.proyectos.find(p => p.nombre === emp.proyecto);
+    
+    document.getElementById('puesto_id').value = puesto?.id || '';
+    document.getElementById('supervisor_id').value = supervisor?.id || '';
+    document.getElementById('proyecto_id').value = proyecto?.id || '';
+    document.getElementById('fecha_ingreso').value = emp.fecha_ingreso || '';
+    document.getElementById('dias_vacaciones').value = emp.dias_vacaciones || 0;
+    document.getElementById('es_admin').checked = emp.es_admin;
+    document.getElementById('activo').checked = emp.activo;
+    document.getElementById('activoGroup').style.display = 'block';
+    
+    document.getElementById('modalEmpleado').classList.add('show');
+}
+
+async function guardarEmpleado() {
+    const id = document.getElementById('empleadoId').value;
+    const nombre = document.getElementById('nombre').value.trim();
+    const apellidos = document.getElementById('apellidos').value.trim();
+    const email = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value;
+    const nuevaPassword = document.getElementById('nuevaPassword').value;
+    const confirmarPassword = document.getElementById('confirmarPassword').value;
+    
+    if (!nombre || !apellidos || !email) {
+        mostrarToast('Completa los campos obligatorios', 'error');
+        return;
+    }
+    
+    if (!modoEdicion && password.length < 6) {
+        mostrarToast('La contraseña debe tener al menos 6 caracteres', 'error');
+        return;
+    }
+    
+    // Validar cambio de contraseña en modo edición
+    if (modoEdicion && nuevaPassword) {
+        if (nuevaPassword.length < 6) {
+            mostrarToast('La nueva contraseña debe tener al menos 6 caracteres', 'error');
+            return;
+        }
+        if (nuevaPassword !== confirmarPassword) {
+            mostrarToast('Las contraseñas no coinciden', 'error');
+            return;
+        }
+    }
+    
+    const btnGuardar = document.getElementById('btnGuardar');
+    btnGuardar.disabled = true;
+    btnGuardar.textContent = 'Guardando...';
+    
+    try {
+        if (modoEdicion) {
+            // Actualizar datos del empleado
+            const data = {
+                nombre: nombre,
+                apellidos: apellidos,
+                puesto_id: document.getElementById('puesto_id').value || null,
+                supervisor_id: document.getElementById('supervisor_id').value || null,
+                proyecto_id: document.getElementById('proyecto_id').value || null,
+                dias_vacaciones: parseFloat(document.getElementById('dias_vacaciones').value) || 0,
+                es_admin: document.getElementById('es_admin').checked,
+                activo: document.getElementById('activo').checked
+            };
+            
+            const response = await fetch(`/api/empleados/${id}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            
+            if (response.ok) {
+                // Si hay nueva contraseña, cambiarla
+                if (nuevaPassword) {
+                    const pwdResponse = await fetch(`/api/empleados/${id}/cambiar-password`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ nueva_password: nuevaPassword })
+                    });
+                    
+                    if (pwdResponse.ok) {
+                        mostrarToast('Empleado y contraseña actualizados', 'success');
+                    } else {
+                        const pwdError = await pwdResponse.json();
+                        mostrarToast('Empleado actualizado, pero error al cambiar contraseña: ' + (pwdError.detail || 'Error'), 'error');
+                    }
+                } else {
+                    mostrarToast('Empleado actualizado', 'success');
+                }
+                cerrarModal();
+                await cargarEmpleados();
+            } else {
+                const error = await response.json();
+                mostrarToast(error.detail || 'Error al actualizar', 'error');
+            }
+        } else {
+            // Crear nuevo
+            const puestoId = document.getElementById('puesto_id').value;
+            const supervisorId = document.getElementById('supervisor_id').value;
+            const proyectoId = document.getElementById('proyecto_id').value;
+            const fechaIngreso = document.getElementById('fecha_ingreso').value;
+            
+            const data = {
+                email: email,
+                password: password,
+                nombre: nombre,
+                apellidos: apellidos,
+                puesto_id: puestoId ? parseInt(puestoId) : null,
+                supervisor_id: supervisorId ? parseInt(supervisorId) : null,
+                proyecto_id: proyectoId ? parseInt(proyectoId) : null,
+                fecha_ingreso: fechaIngreso || null,
+                dias_vacaciones: parseFloat(document.getElementById('dias_vacaciones').value) || 0,
+                es_admin: document.getElementById('es_admin').checked
+            };
+            
+            console.log('Enviando datos:', JSON.stringify(data, null, 2));
+            
+            const response = await fetch('/api/empleados/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            
+            if (response.ok) {
+                mostrarToast('Empleado creado exitosamente', 'success');
+                cerrarModal();
+                await cargarEmpleados();
+            } else {
+                const error = await response.json();
+                console.error('Error del servidor:', error);
+                mostrarToast(error.detail || 'Error al crear empleado', 'error');
+            }
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        mostrarToast('Error de conexión', 'error');
+    } finally {
+        btnGuardar.disabled = false;
+        btnGuardar.textContent = 'Guardar';
+    }
+}
+
+async function desactivarEmpleado(id) {
+    const emp = empleados.find(e => e.id === id);
+    if (!emp) return;
+    
+    if (!confirm(`¿Desactivar a ${emp.nombre_completo}?`)) return;
+    
+    try {
+        const response = await fetch(`/api/empleados/${id}`, { method: 'DELETE' });
+        
+        if (response.ok) {
+            mostrarToast('Empleado desactivado', 'success');
+            await cargarEmpleados();
+        } else {
+            const error = await response.json();
+            mostrarToast(error.detail || 'Error al desactivar', 'error');
+        }
+    } catch (error) {
+        mostrarToast('Error de conexión', 'error');
+    }
+}
+
+// Toast
+function mostrarToast(mensaje, tipo = 'success') {
+    const toast = document.getElementById('toast');
+    toast.textContent = mensaje;
+    toast.className = `toast show ${tipo}`;
+    setTimeout(() => toast.classList.remove('show'), 3000);
+}
+
+// Ficha de Empleado
+let empleadoFichaActual = null;
+
+async function verFichaEmpleado(id) {
+    const emp = empleados.find(e => e.id === id);
+    if (!emp) return;
+    
+    empleadoFichaActual = emp;
+    
+    // Avatar e iniciales
+    const initials = emp.nombre_completo.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+    document.getElementById('fichaAvatar').textContent = initials;
+    document.getElementById('fichaNombre').textContent = emp.nombre_completo;
+    
+    // Datos Personales
+    document.getElementById('fichaExpNombre').textContent = emp.nombre_completo;
+    document.getElementById('fichaExpEmail').textContent = emp.email;
+    
+    // Rol
+    document.getElementById('fichaExpRol').innerHTML = emp.es_admin 
+        ? '<span class="expediente-badge admin">👑 Administrador</span>'
+        : '<span class="expediente-badge user">👤 Usuario</span>';
+    
+    // Estado
+    document.getElementById('fichaExpEstado').innerHTML = emp.activo
+        ? '<span class="expediente-badge active">✓ Activo</span>'
+        : '<span class="expediente-badge inactive">✗ Inactivo</span>';
+    
+    // Datos Laborales
+    document.getElementById('fichaExpPuesto').textContent = emp.puesto || 'Sin asignar';
+    document.getElementById('fichaExpSupervisor').textContent = emp.supervisor || 'Sin asignar';
+    document.getElementById('fichaExpProyecto').textContent = emp.proyecto || 'Sin asignar';
+    document.getElementById('fichaExpIngreso').textContent = emp.fecha_ingreso ? formatearFecha(emp.fecha_ingreso) : 'No registrada';
+    
+    // Vacaciones
+    document.getElementById('fichaExpVacaciones').textContent = `${emp.dias_vacaciones || 0} días`;
+    
+    // Cargar equipos asignados
+    await cargarEquiposEmpleado(id);
+    
+    // Mostrar modal
+    document.getElementById('fichaEmpleado').classList.add('show');
+}
+
+function formatearFecha(fecha) {
+    const meses = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+    const d = new Date(fecha + 'T00:00:00');
+    return `${d.getDate()} ${meses[d.getMonth()]} ${d.getFullYear()}`;
+}
+
+async function cargarEquiposEmpleado(empleadoId) {
+    const container = document.getElementById('fichaExpEquipos');
+    
+    try {
+        const response = await fetch(`/api/inventario/?empleado_id=${empleadoId}`);
+        if (response.ok) {
+            const equipos = await response.json();
+            
+            if (equipos.length === 0) {
+                container.innerHTML = '<div class="expediente-empty">No tiene equipos asignados</div>';
+                return;
+            }
+            
+            const iconos = {
+                'laptop': '💻',
+                'desktop': '🖥️',
+                'monitor': '🖥️',
+                'teclado': '⌨️',
+                'mouse': '🖱️',
+                'headset': '🎧',
+                'telefono': '📱',
+                'impresora': '🖨️',
+                'otro': '📦'
+            };
+            
+            container.innerHTML = equipos.map(eq => {
+                const tipo = (eq.tipo || 'otro').toLowerCase();
+                const icono = iconos[tipo] || '📦';
+                const descripcion = [eq.marca, eq.modelo].filter(Boolean).join(' ') || 'Equipo';
+                
+                return `
+                    <div class="equipo-item-mini">
+                        <span class="equipo-icon">${icono}</span>
+                        <span class="equipo-desc">${descripcion}</span>
+                        ${eq.numero_serie ? `<span class="equipo-serie">S/N: ${eq.numero_serie}</span>` : ''}
+                    </div>
+                `;
+            }).join('');
+        } else {
+            container.innerHTML = '<div class="expediente-empty">Error al cargar equipos</div>';
+        }
+    } catch (error) {
+        console.error('Error cargando equipos:', error);
+        container.innerHTML = '<div class="expediente-empty">Error al cargar equipos</div>';
+    }
+}
+
+function cerrarFicha() {
+    document.getElementById('fichaEmpleado').classList.remove('show');
+    empleadoFichaActual = null;
+}
+
+function editarDesdeficah() {
+    if (empleadoFichaActual) {
+        cerrarFicha();
+        editarEmpleado(empleadoFichaActual.id);
+    }
+}
+
+// Cerrar ficha con Escape
+document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') {
+        cerrarFicha();
+        cerrarModal();
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,970 @@
+{% extends "base.html" %}
+
+{% block title %}Mi Perfil - Intranet{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Profile Header */
+    .profile-header {
+        background: linear-gradient(135deg, #1e3a5f 0%, #3d5a73 50%, #0093b0 100%);
+        border-radius: 20px;
+        padding: 40px;
+        color: white;
+        margin-bottom: 28px;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .profile-header::before {
+        content: '';
+        position: absolute;
+        top: -100px;
+        right: -100px;
+        width: 400px;
+        height: 400px;
+        background: rgba(255, 255, 255, 0.08);
+        border-radius: 50%;
+    }
+    
+    .profile-header::after {
+        content: '';
+        position: absolute;
+        bottom: -150px;
+        left: 50%;
+        width: 500px;
+        height: 500px;
+        background: rgba(255, 255, 255, 0.03);
+        border-radius: 50%;
+    }
+    
+    .profile-header-content {
+        display: flex;
+        align-items: center;
+        gap: 32px;
+        position: relative;
+        z-index: 1;
+    }
+    
+    .profile-avatar-large {
+        width: 120px;
+        height: 120px;
+        border-radius: 24px;
+        background: rgba(255, 255, 255, 0.2);
+        backdrop-filter: blur(10px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 48px;
+        font-weight: 700;
+        border: 3px solid rgba(255, 255, 255, 0.3);
+    }
+    
+    .profile-info {
+        flex: 1;
+    }
+    
+    .profile-name {
+        font-size: 32px;
+        font-weight: 700;
+        margin-bottom: 8px;
+    }
+    
+    .profile-position {
+        font-size: 16px;
+        opacity: 0.9;
+        margin-bottom: 4px;
+    }
+    
+    .profile-email {
+        font-size: 14px;
+        opacity: 0.7;
+    }
+    
+    .profile-stats-header {
+        display: flex;
+        gap: 24px;
+        margin-top: 20px;
+    }
+    
+    .profile-stat-item {
+        background: rgba(255, 255, 255, 0.15);
+        backdrop-filter: blur(10px);
+        padding: 16px 24px;
+        border-radius: 12px;
+        text-align: center;
+        min-width: 140px;
+    }
+    
+    .profile-stat-value {
+        font-size: 28px;
+        font-weight: 700;
+    }
+    
+    .profile-stat-label {
+        font-size: 12px;
+        opacity: 0.8;
+        margin-top: 4px;
+    }
+    
+    /* Content Grid */
+    .profile-grid {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: 24px;
+    }
+    
+    /* Info Card */
+    .info-card {
+        background: white;
+        border-radius: 16px;
+        border: 1px solid var(--border);
+        overflow: hidden;
+    }
+    
+    .info-card-header {
+        padding: 16px 24px;
+        background: linear-gradient(135deg, #1e3a5f, #3d5a73);
+    }
+    
+    .info-card-title {
+        font-size: 16px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        color: white;
+    }
+    
+    .info-card-body {
+        padding: 0;
+    }
+    
+    /* Info Row */
+    .info-row {
+        display: flex;
+        align-items: center;
+        padding: 18px 24px;
+        border-bottom: 1px solid var(--border-light);
+        transition: background 0.2s;
+    }
+    
+    .info-row:hover {
+        background: var(--bg-main);
+    }
+    
+    .info-row:last-child {
+        border-bottom: none;
+    }
+    
+    .info-icon {
+        width: 44px;
+        height: 44px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+        margin-right: 16px;
+        flex-shrink: 0;
+    }
+    
+    .info-icon.teal { background: rgba(13, 148, 136, 0.1); }
+    .info-icon.purple { background: rgba(139, 92, 246, 0.1); }
+    .info-icon.blue { background: rgba(59, 130, 246, 0.1); }
+    .info-icon.orange { background: rgba(245, 158, 11, 0.1); }
+    .info-icon.green { background: rgba(16, 185, 129, 0.1); }
+    
+    .info-content {
+        flex: 1;
+    }
+    
+    .info-label {
+        font-size: 12px;
+        color: var(--text-secondary);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 4px;
+    }
+    
+    .info-value {
+        font-size: 15px;
+        font-weight: 500;
+        color: var(--text-primary);
+    }
+    
+    .info-value.muted {
+        color: var(--text-secondary);
+        font-style: italic;
+    }
+    
+    /* Quick Actions Card */
+    .actions-card {
+        background: white;
+        border-radius: 16px;
+        border: 1px solid var(--border);
+        overflow: hidden;
+    }
+    
+    .actions-card-header {
+        padding: 16px 24px;
+        background: linear-gradient(135deg, #0093b0, #007a94);
+    }
+    
+    .actions-card-body {
+        padding: 20px;
+    }
+    
+    .action-btn {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        width: 100%;
+        padding: 16px;
+        background: var(--bg-main);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        text-decoration: none;
+        color: var(--text-primary);
+        margin-bottom: 12px;
+        transition: all 0.2s;
+    }
+    
+    .action-btn:last-child {
+        margin-bottom: 0;
+    }
+    
+    .action-btn:hover {
+        background: white;
+        border-color: var(--primary);
+        box-shadow: 0 4px 12px rgba(13, 148, 136, 0.1);
+        transform: translateX(4px);
+    }
+    
+    .action-icon {
+        width: 44px;
+        height: 44px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+    }
+    
+    .action-icon.teal { background: linear-gradient(135deg, #0093b0, #007a94); color: white; }
+    .action-icon.purple { background: linear-gradient(135deg, #3d5a73, #1e3a5f); color: white; }
+    .action-icon.orange { background: linear-gradient(135deg, #7badc4, #0093b0); color: white; }
+    
+    .action-text {
+        flex: 1;
+    }
+    
+    .action-text strong {
+        display: block;
+        font-size: 14px;
+        margin-bottom: 2px;
+    }
+    
+    .action-text span {
+        font-size: 12px;
+        color: var(--text-secondary);
+    }
+    
+    .action-arrow {
+        color: var(--text-muted);
+        transition: transform 0.2s;
+    }
+    
+    .action-btn:hover .action-arrow {
+        transform: translateX(4px);
+        color: var(--primary);
+    }
+    
+    @media (max-width: 1024px) {
+        .profile-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .profile-header-content {
+            flex-direction: column;
+            text-align: center;
+        }
+        
+        .profile-stats-header {
+            justify-content: center;
+        }
+    }
+    
+    /* Modal Styles */
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+    }
+    
+    .modal-overlay.show {
+        display: flex;
+    }
+    
+    .modal-card {
+        background: white;
+        border-radius: 16px;
+        width: 100%;
+        max-width: 420px;
+        margin: 20px;
+        overflow: hidden;
+    }
+    
+    .modal-header {
+        padding: 20px 24px;
+        background: linear-gradient(135deg, #1e3a5f, #3d5a73);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+    
+    .modal-header h3 {
+        font-size: 18px;
+        font-weight: 600;
+    }
+    
+    .modal-close {
+        background: none;
+        border: none;
+        color: white;
+        font-size: 24px;
+        cursor: pointer;
+        opacity: 0.8;
+    }
+    
+    .modal-close:hover {
+        opacity: 1;
+    }
+    
+    .modal-body {
+        padding: 24px;
+    }
+    
+    .modal-footer {
+        padding: 16px 24px;
+        border-top: 1px solid var(--border);
+        display: flex;
+        justify-content: flex-end;
+        gap: 12px;
+    }
+    
+    .form-group {
+        margin-bottom: 16px;
+    }
+    
+    .form-label {
+        display: block;
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: 6px;
+    }
+    
+    .form-input {
+        width: 100%;
+        padding: 12px 14px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        font-size: 14px;
+        transition: all 0.2s;
+        box-sizing: border-box;
+    }
+    
+    .form-input:focus {
+        outline: none;
+        border-color: #0093b0;
+        box-shadow: 0 0 0 3px rgba(0, 147, 176, 0.1);
+    }
+    
+    .btn-cancel {
+        padding: 10px 20px;
+        background: var(--bg-main);
+        color: var(--text-secondary);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+    }
+    
+    .btn-save {
+        padding: 10px 20px;
+        background: linear-gradient(135deg, #0093b0, #007a94);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+    }
+    
+    .btn-save:hover {
+        box-shadow: 0 4px 12px rgba(0, 147, 176, 0.3);
+    }
+    
+    .btn-save:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+    
+    .success-message {
+        padding: 12px 16px;
+        background: rgba(16, 185, 129, 0.1);
+        border: 1px solid rgba(16, 185, 129, 0.2);
+        border-radius: 8px;
+        color: #059669;
+        font-size: 13px;
+        margin-top: 16px;
+    }
+    
+    .error-message {
+        padding: 12px 16px;
+        background: rgba(239, 68, 68, 0.1);
+        border: 1px solid rgba(239, 68, 68, 0.2);
+        border-radius: 8px;
+        color: #dc2626;
+        font-size: 13px;
+        margin-top: 16px;
+    }
+    
+    .toast {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        padding: 16px 24px;
+        border-radius: 10px;
+        color: white;
+        font-weight: 500;
+        z-index: 2000;
+        display: none;
+        animation: slideIn 0.3s ease;
+    }
+    
+    .toast.show { display: block; }
+    .toast.success { background: #10b981; }
+    .toast.error { background: #ef4444; }
+    
+    @keyframes slideIn {
+        from { transform: translateX(100%); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Profile Header -->
+<div class="profile-header">
+    <div class="profile-header-content">
+        <div class="profile-avatar-large" id="avatarInitials">--</div>
+        <div class="profile-info">
+            <div class="profile-name" id="profileName">Cargando...</div>
+            <div class="profile-position" id="profilePosition">-</div>
+            <div class="profile-email" id="profileEmail">-</div>
+            
+            <div class="profile-stats-header">
+                <div class="profile-stat-item">
+                    <div class="profile-stat-value" id="diasVacaciones">-</div>
+                    <div class="profile-stat-label">Días de vacaciones</div>
+                </div>
+                <div class="profile-stat-item">
+                    <div class="profile-stat-value" id="fechaIngreso">-</div>
+                    <div class="profile-stat-label">Fecha de ingreso</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Content Grid -->
+<div class="profile-grid">
+    <!-- Personal Info -->
+    <div class="info-card">
+        <div class="info-card-header">
+            <h3 class="info-card-title">
+                <span>👤</span> Información Personal
+            </h3>
+        </div>
+        <div class="info-card-body">
+            <div class="info-row">
+                <div class="info-icon teal">📧</div>
+                <div class="info-content">
+                    <div class="info-label">Correo electrónico</div>
+                    <div class="info-value" id="infoEmail">-</div>
+                </div>
+            </div>
+            <div class="info-row">
+                <div class="info-icon purple">💼</div>
+                <div class="info-content">
+                    <div class="info-label">Puesto</div>
+                    <div class="info-value" id="infoPuesto">-</div>
+                </div>
+            </div>
+            <div class="info-row">
+                <div class="info-icon blue">📁</div>
+                <div class="info-content">
+                    <div class="info-label">Proyecto asignado</div>
+                    <div class="info-value" id="infoProyecto">-</div>
+                </div>
+            </div>
+            <div class="info-row">
+                <div class="info-icon orange">👥</div>
+                <div class="info-content">
+                    <div class="info-label">Supervisor</div>
+                    <div class="info-value" id="infoSupervisor">-</div>
+                </div>
+            </div>
+            <div class="info-row">
+                <div class="info-icon green">🔢</div>
+                <div class="info-content">
+                    <div class="info-label">Número de empleado</div>
+                    <div class="info-value" id="infoNumero">-</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Quick Actions -->
+    <div class="actions-card">
+        <div class="actions-card-header">
+            <h3 class="info-card-title">
+                <span>⚡</span> Acciones rápidas
+            </h3>
+        </div>
+        <div class="actions-card-body">
+            <a href="/actividades" class="action-btn">
+                <div class="action-icon teal">📅</div>
+                <div class="action-text">
+                    <strong>Capturar actividades</strong>
+                    <span>Registra tus horas de trabajo</span>
+                </div>
+                <span class="action-arrow">→</span>
+            </a>
+            <a href="/vacaciones" class="action-btn">
+                <div class="action-icon purple">🏖️</div>
+                <div class="action-text">
+                    <strong>Solicitar vacaciones</strong>
+                    <span>Gestiona tus días de descanso</span>
+                </div>
+                <span class="action-arrow">→</span>
+            </a>
+            <a href="#" onclick="descargarReporte(); return false;" class="action-btn">
+                <div class="action-icon orange">📊</div>
+                <div class="action-text">
+                    <strong>Descargar mi reporte</strong>
+                    <span>Exportar reporte mensual en PDF</span>
+                </div>
+                <span class="action-arrow">→</span>
+            </a>
+            <a href="#" onclick="abrirModalPassword(); return false;" class="action-btn">
+                <div class="action-icon purple">🔐</div>
+                <div class="action-text">
+                    <strong>Cambiar contraseña</strong>
+                    <span>Actualiza tu contraseña de acceso</span>
+                </div>
+                <span class="action-arrow">→</span>
+            </a>
+            <a href="#" onclick="abrirModalFirma(); return false;" class="action-btn">
+                <div class="action-icon green">✍️</div>
+                <div class="action-text">
+                    <strong>Mi firma digital</strong>
+                    <span>Sube tu firma para reportes</span>
+                </div>
+                <span class="action-arrow">→</span>
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Firma Digital -->
+<div class="modal-overlay" id="modalFirma">
+    <div class="modal-card" style="max-width: 500px;">
+        <div class="modal-header">
+            <h3>✍️ Mi Firma Digital</h3>
+            <button class="modal-close" onclick="cerrarModalFirma()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 16px;">
+                Tu firma aparecerá automáticamente en los reportes de actividades y solicitudes de vacaciones.
+            </p>
+            
+            <!-- Vista previa de firma actual -->
+            <div id="firmaActualContainer" style="display: none; margin-bottom: 20px;">
+                <label style="font-size: 12px; color: var(--text-secondary); display: block; margin-bottom: 8px;">Firma actual:</label>
+                <div style="background: #f8fafc; border: 1px solid var(--border); border-radius: 8px; padding: 16px; text-align: center;">
+                    <img id="firmaActualImg" src="" alt="Firma actual" style="max-width: 200px; max-height: 80px;">
+                </div>
+            </div>
+            
+            <!-- Subir nueva firma -->
+            <div class="form-group">
+                <label class="form-label">Subir nueva firma</label>
+                <div style="border: 2px dashed var(--border); border-radius: 10px; padding: 24px; text-align: center; cursor: pointer; transition: all 0.2s;" 
+                     id="dropZoneFirma"
+                     onclick="document.getElementById('inputFirma').click()">
+                    <div style="font-size: 32px; margin-bottom: 8px;">📤</div>
+                    <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 4px;">Haz clic o arrastra tu firma aquí</p>
+                    <p style="font-size: 11px; color: var(--text-muted);">PNG transparente recomendado (máx. 500KB)</p>
+                </div>
+                <input type="file" id="inputFirma" accept="image/png,image/jpeg" style="display: none;" onchange="previsualizarFirma(this)">
+            </div>
+            
+            <!-- Preview nueva firma -->
+            <div id="previewFirmaContainer" style="display: none; margin-top: 16px;">
+                <label style="font-size: 12px; color: var(--text-secondary); display: block; margin-bottom: 8px;">Nueva firma:</label>
+                <div style="background: #f0fdf4; border: 1px solid #86efac; border-radius: 8px; padding: 16px; text-align: center;">
+                    <img id="previewFirmaImg" src="" alt="Preview" style="max-width: 200px; max-height: 80px;">
+                </div>
+            </div>
+            
+            <div id="firmaMessage" style="display: none; margin-top: 12px;"></div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-cancel" onclick="cerrarModalFirma()">Cancelar</button>
+            <button class="btn-save" onclick="subirFirma()" id="btnSubirFirma" disabled>Guardar Firma</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Cambiar Contraseña -->
+<div class="modal-overlay" id="modalPassword">
+    <div class="modal-card">
+        <div class="modal-header">
+            <h3>🔐 Cambiar Contraseña</h3>
+            <button class="modal-close" onclick="cerrarModalPassword()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <form id="formPassword">
+                <div class="form-group">
+                    <label class="form-label">Contraseña actual</label>
+                    <input type="password" id="passwordActual" class="form-input" required placeholder="Tu contraseña actual">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Nueva contraseña</label>
+                    <input type="password" id="passwordNueva" class="form-input" required placeholder="Mínimo 6 caracteres">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Confirmar nueva contraseña</label>
+                    <input type="password" id="passwordConfirmar" class="form-input" required placeholder="Repite la nueva contraseña">
+                </div>
+                <div id="passwordMessage" style="display: none;"></div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-cancel" onclick="cerrarModalPassword()">Cancelar</button>
+            <button class="btn-save" onclick="cambiarPassword()" id="btnCambiarPassword">Cambiar Contraseña</button>
+        </div>
+    </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    async function cargarPerfil() {
+        try {
+            const response = await fetch('/api/empleados/me');
+            if (response.ok) {
+                const data = await response.json();
+                
+                // Avatar
+                const initials = (data.nombre?.[0] || '') + (data.apellidos?.[0] || '');
+                document.getElementById('avatarInitials').textContent = initials || '?';
+                
+                // Header info
+                document.getElementById('profileName').textContent = `${data.nombre} ${data.apellidos}`;
+                document.getElementById('profilePosition').textContent = data.puesto || 'Puesto no asignado';
+                document.getElementById('profileEmail').textContent = data.email;
+                document.getElementById('diasVacaciones').textContent = data.dias_vacaciones || 0;
+                
+                // Fecha ingreso formateada
+                if (data.fecha_ingreso) {
+                    const fecha = new Date(data.fecha_ingreso + 'T00:00:00');
+                    document.getElementById('fechaIngreso').textContent = fecha.toLocaleDateString('es-MX', { 
+                        day: '2-digit', 
+                        month: 'short', 
+                        year: 'numeric' 
+                    });
+                }
+                
+                // Detailed info
+                document.getElementById('infoEmail').textContent = data.email;
+                document.getElementById('infoPuesto').textContent = data.puesto || 'No asignado';
+                document.getElementById('infoPuesto').classList.toggle('muted', !data.puesto);
+                document.getElementById('infoProyecto').textContent = data.proyecto || 'No asignado';
+                document.getElementById('infoProyecto').classList.toggle('muted', !data.proyecto);
+                document.getElementById('infoSupervisor').textContent = data.supervisor || 'No asignado';
+                document.getElementById('infoSupervisor').classList.toggle('muted', !data.supervisor);
+                document.getElementById('infoNumero').textContent = data.numero_empleado || 'No asignado';
+                document.getElementById('infoNumero').classList.toggle('muted', !data.numero_empleado);
+                
+                // Update greeting
+                const greetingName = document.getElementById('greetingName');
+                if (greetingName) greetingName.textContent = data.nombre;
+            }
+        } catch (error) {
+            console.error('Error:', error);
+        }
+    }
+    
+    function descargarReporte() {
+        const now = new Date();
+        window.open(`/api/reportes/mi-reporte-mensual/${now.getFullYear()}/${now.getMonth() + 1}`, '_blank');
+    }
+    
+    // Modal de contraseña
+    function abrirModalPassword() {
+        document.getElementById('formPassword').reset();
+        document.getElementById('passwordMessage').style.display = 'none';
+        document.getElementById('modalPassword').classList.add('show');
+    }
+    
+    function cerrarModalPassword() {
+        document.getElementById('modalPassword').classList.remove('show');
+    }
+    
+    // Cerrar modal al hacer clic fuera
+    document.getElementById('modalPassword').addEventListener('click', (e) => {
+        if (e.target === document.getElementById('modalPassword')) {
+            cerrarModalPassword();
+        }
+    });
+    
+    async function cambiarPassword() {
+        const passwordActual = document.getElementById('passwordActual').value;
+        const passwordNueva = document.getElementById('passwordNueva').value;
+        const passwordConfirmar = document.getElementById('passwordConfirmar').value;
+        const messageDiv = document.getElementById('passwordMessage');
+        const btnCambiar = document.getElementById('btnCambiarPassword');
+        
+        // Validaciones
+        if (!passwordActual || !passwordNueva || !passwordConfirmar) {
+            messageDiv.className = 'error-message';
+            messageDiv.textContent = 'Completa todos los campos';
+            messageDiv.style.display = 'block';
+            return;
+        }
+        
+        if (passwordNueva.length < 6) {
+            messageDiv.className = 'error-message';
+            messageDiv.textContent = 'La nueva contraseña debe tener al menos 6 caracteres';
+            messageDiv.style.display = 'block';
+            return;
+        }
+        
+        if (passwordNueva !== passwordConfirmar) {
+            messageDiv.className = 'error-message';
+            messageDiv.textContent = 'Las contraseñas no coinciden';
+            messageDiv.style.display = 'block';
+            return;
+        }
+        
+        btnCambiar.disabled = true;
+        btnCambiar.textContent = 'Cambiando...';
+        messageDiv.style.display = 'none';
+        
+        try {
+            const response = await fetch('/auth/cambiar-password', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    password_actual: passwordActual,
+                    password_nueva: passwordNueva
+                })
+            });
+            
+            const data = await response.json();
+            
+            if (response.ok) {
+                messageDiv.className = 'success-message';
+                messageDiv.textContent = '✅ Contraseña actualizada correctamente';
+                messageDiv.style.display = 'block';
+                
+                // Cerrar modal después de 2 segundos
+                setTimeout(() => {
+                    cerrarModalPassword();
+                    mostrarToast('Contraseña actualizada', 'success');
+                }, 2000);
+            } else {
+                messageDiv.className = 'error-message';
+                messageDiv.textContent = data.detail || 'Error al cambiar contraseña';
+                messageDiv.style.display = 'block';
+            }
+        } catch (error) {
+            messageDiv.className = 'error-message';
+            messageDiv.textContent = 'Error de conexión';
+            messageDiv.style.display = 'block';
+        } finally {
+            btnCambiar.disabled = false;
+            btnCambiar.textContent = 'Cambiar Contraseña';
+        }
+    }
+    
+    // Toast
+    function mostrarToast(mensaje, tipo = 'success') {
+        const toast = document.getElementById('toast');
+        toast.textContent = mensaje;
+        toast.className = `toast show ${tipo}`;
+        setTimeout(() => toast.classList.remove('show'), 3000);
+    }
+    
+    document.addEventListener('DOMContentLoaded', cargarPerfil);
+    
+    // ========================================
+    // FIRMA DIGITAL
+    // ========================================
+    let archivoFirma = null;
+    
+    function abrirModalFirma() {
+        document.getElementById('modalFirma').classList.add('show');
+        cargarFirmaActual();
+        // Reset
+        document.getElementById('inputFirma').value = '';
+        document.getElementById('previewFirmaContainer').style.display = 'none';
+        document.getElementById('btnSubirFirma').disabled = true;
+        document.getElementById('firmaMessage').style.display = 'none';
+        archivoFirma = null;
+    }
+    
+    function cerrarModalFirma() {
+        document.getElementById('modalFirma').classList.remove('show');
+    }
+    
+    async function cargarFirmaActual() {
+        try {
+            const response = await fetch('/api/empleados/mi-firma');
+            if (response.ok) {
+                const data = await response.json();
+                if (data.firma_url) {
+                    document.getElementById('firmaActualImg').src = data.firma_url;
+                    document.getElementById('firmaActualContainer').style.display = 'block';
+                } else {
+                    document.getElementById('firmaActualContainer').style.display = 'none';
+                }
+            }
+        } catch (error) {
+            console.log('No hay firma registrada');
+            document.getElementById('firmaActualContainer').style.display = 'none';
+        }
+    }
+    
+    function previsualizarFirma(input) {
+        if (input.files && input.files[0]) {
+            const file = input.files[0];
+            
+            // Validar tamaño (500KB)
+            if (file.size > 500 * 1024) {
+                mostrarMensajeFirma('El archivo es muy grande. Máximo 500KB.', 'error');
+                return;
+            }
+            
+            // Validar tipo
+            if (!file.type.match('image/(png|jpeg)')) {
+                mostrarMensajeFirma('Solo se permiten archivos PNG o JPG.', 'error');
+                return;
+            }
+            
+            archivoFirma = file;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                document.getElementById('previewFirmaImg').src = e.target.result;
+                document.getElementById('previewFirmaContainer').style.display = 'block';
+                document.getElementById('btnSubirFirma').disabled = false;
+                document.getElementById('firmaMessage').style.display = 'none';
+            };
+            reader.readAsDataURL(file);
+        }
+    }
+    
+    function mostrarMensajeFirma(mensaje, tipo) {
+        const msgDiv = document.getElementById('firmaMessage');
+        msgDiv.className = tipo === 'error' ? 'error-message' : 'success-message';
+        msgDiv.textContent = mensaje;
+        msgDiv.style.display = 'block';
+    }
+    
+    async function subirFirma() {
+        if (!archivoFirma) return;
+        
+        const btn = document.getElementById('btnSubirFirma');
+        btn.disabled = true;
+        btn.textContent = 'Subiendo...';
+        
+        try {
+            const formData = new FormData();
+            formData.append('firma', archivoFirma);
+            
+            const response = await fetch('/api/empleados/subir-firma', {
+                method: 'POST',
+                body: formData
+            });
+            
+            if (response.ok) {
+                mostrarMensajeFirma('✅ Firma guardada correctamente', 'success');
+                cargarFirmaActual();
+                
+                setTimeout(() => {
+                    cerrarModalFirma();
+                    mostrarToast('Firma actualizada', 'success');
+                }, 1500);
+            } else {
+                const error = await response.json();
+                mostrarMensajeFirma(error.detail || 'Error al subir firma', 'error');
+            }
+        } catch (error) {
+            mostrarMensajeFirma('Error de conexión', 'error');
+        } finally {
+            btn.disabled = false;
+            btn.textContent = 'Guardar Firma';
+        }
+    }
+    
+    // Drag & drop para firma
+    const dropZone = document.getElementById('dropZoneFirma');
+    if (dropZone) {
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.style.borderColor = '#0093b0';
+            dropZone.style.background = '#f0f9ff';
+        });
+        
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.style.borderColor = 'var(--border)';
+            dropZone.style.background = 'transparent';
+        });
+        
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.style.borderColor = 'var(--border)';
+            dropZone.style.background = 'transparent';
+            
+            if (e.dataTransfer.files.length) {
+                document.getElementById('inputFirma').files = e.dataTransfer.files;
+                previsualizarFirma(document.getElementById('inputFirma'));
+            }
+        });
+    }
+    
+    // Cerrar modal firma al hacer clic fuera
+    document.getElementById('modalFirma')?.addEventListener('click', (e) => {
+        if (e.target === document.getElementById('modalFirma')) {
+            cerrarModalFirma();
+        }
+    });
+</script>
+{% endblock %}

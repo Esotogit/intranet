@@ -1,0 +1,1461 @@
+{% extends "base.html" %}
+
+{% block title %}Reportes y Seguimiento - Intranet{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Page Header Compacto */
+    .page-header-card {
+        background: linear-gradient(135deg, #1e3a5f 0%, #0093b0 100%);
+        border-radius: 12px;
+        padding: 18px 24px;
+        color: white;
+        margin-bottom: 16px;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .page-header-card::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -10%;
+        width: 300px;
+        height: 300px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 50%;
+    }
+    
+    .page-header-card h1 {
+        font-size: 20px;
+        font-weight: 700;
+        margin-bottom: 2px;
+        position: relative;
+        z-index: 1;
+    }
+    
+    .page-header-card p {
+        opacity: 0.85;
+        font-size: 13px;
+        position: relative;
+        z-index: 1;
+    }
+    
+    /* Main Tabs */
+    .main-tabs {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 16px;
+        background: white;
+        padding: 6px;
+        border-radius: 10px;
+        border: 1px solid var(--border);
+    }
+    
+    .main-tab {
+        flex: 1;
+        padding: 10px 16px;
+        border: none;
+        background: transparent;
+        border-radius: 6px;
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--text-secondary);
+        cursor: pointer;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+    }
+    
+    .main-tab:hover {
+        background: var(--bg-main);
+        color: var(--text-primary);
+    }
+    
+    .main-tab.active {
+        background: linear-gradient(135deg, #0093b0, #007a94);
+        color: white;
+    }
+    
+    .main-tab .badge {
+        background: rgba(255,255,255,0.2);
+        padding: 2px 8px;
+        border-radius: 10px;
+        font-size: 11px;
+    }
+    
+    .main-tab.active .badge {
+        background: rgba(255,255,255,0.3);
+    }
+    
+    /* Tab Content */
+    .tab-content {
+        display: none;
+    }
+    
+    .tab-content.active {
+        display: block;
+    }
+    
+    /* Week Selector */
+    .week-selector {
+        background: white;
+        border-radius: 14px;
+        border: 1px solid var(--border);
+        padding: 20px 24px;
+        margin-bottom: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+    
+    .week-nav {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+    }
+    
+    .week-nav-btn {
+        width: 40px;
+        height: 40px;
+        border: 1px solid var(--border);
+        background: white;
+        border-radius: 10px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s;
+    }
+    
+    .week-nav-btn:hover {
+        background: var(--bg-main);
+        border-color: #0093b0;
+    }
+    
+    .week-display {
+        text-align: center;
+    }
+    
+    .week-label {
+        font-size: 12px;
+        color: var(--text-secondary);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .week-dates {
+        font-size: 18px;
+        font-weight: 600;
+        color: var(--text-primary);
+    }
+    
+    /* Summary Stats */
+    .summary-stats {
+        display: flex;
+        gap: 16px;
+    }
+    
+    .summary-stat {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 16px;
+        border-radius: 10px;
+        font-size: 14px;
+        font-weight: 600;
+    }
+    
+    .summary-stat.complete {
+        background: rgba(0, 147, 176, 0.1);
+        color: #0093b0;
+    }
+    
+    .summary-stat.partial {
+        background: rgba(61, 90, 115, 0.1);
+        color: #3d5a73;
+    }
+    
+    .summary-stat.missing {
+        background: rgba(220, 53, 69, 0.1);
+        color: #dc3545;
+    }
+    
+    /* Tracking Table Card */
+    .tracking-card {
+        background: white;
+        border-radius: 16px;
+        border: 1px solid var(--border);
+        overflow: hidden;
+    }
+    
+    .tracking-card-header {
+        padding: 16px 24px;
+        background: linear-gradient(135deg, #1e3a5f, #3d5a73);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+    
+    .tracking-card-title {
+        font-size: 14px;
+        font-weight: 600;
+        color: white;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    /* Day number in header */
+    .day-num {
+        font-size: 10px;
+        font-weight: 600;
+        color: var(--text-secondary);
+        display: block;
+        margin-bottom: 2px;
+    }
+    
+    .tracking-table th {
+        text-align: center;
+        line-height: 1.2;
+    }
+    
+    .tracking-actions {
+        display: flex;
+        gap: 8px;
+    }
+    
+    .btn-action {
+        padding: 6px 12px;
+        border: none;
+        border-radius: 6px;
+        font-size: 12px;
+        font-weight: 500;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        transition: all 0.2s;
+    }
+    
+    .btn-reminder {
+        background: rgba(255,255,255,0.2);
+        color: white;
+    }
+    
+    .btn-reminder:hover {
+        background: rgba(255,255,255,0.3);
+    }
+    
+    .btn-export {
+        background: white;
+        color: #1e3a5f;
+    }
+    
+    .btn-export:hover {
+        background: #f0f0f0;
+    }
+    
+    /* Tracking Table Compacta */
+    .tracking-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    
+    .tracking-table th {
+        padding: 10px 12px;
+        font-size: 10px;
+        font-weight: 600;
+        color: var(--text-secondary);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        background: var(--bg-main);
+        text-align: center;
+        border-bottom: 1px solid var(--border);
+    }
+    
+    .tracking-table th:first-child {
+        text-align: left;
+        padding-left: 16px;
+    }
+    
+    .tracking-table td {
+        padding: 8px 12px;
+        font-size: 12px;
+        border-bottom: 1px solid var(--border-light);
+        text-align: center;
+    }
+    
+    .tracking-table td:first-child {
+        text-align: left;
+        padding-left: 16px;
+    }
+    
+    .tracking-table tr:hover {
+        background: var(--bg-light);
+    }
+    
+    /* Employee Cell Compacta */
+    .employee-cell {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .employee-avatar {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #0093b0, #007a94);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        font-size: 11px;
+    }
+    
+    .employee-info {
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .employee-name {
+        font-weight: 600;
+        color: var(--text-primary);
+        font-size: 12px;
+    }
+    
+    .employee-position {
+        font-size: 10px;
+        color: var(--text-muted);
+    }
+    
+    /* Day Cell */
+    .day-cell { min-width: 50px; }
+    
+    .day-hours {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 4px 10px;
+        border-radius: 6px;
+        font-weight: 600;
+        font-size: 11px;
+    }
+    
+    .day-hours.filled {
+        background: rgba(0, 147, 176, 0.1);
+        color: #0093b0;
+    }
+    
+    .day-hours.empty {
+        background: rgba(220, 53, 69, 0.1);
+        color: #dc3545;
+    }
+    
+    .total-hours {
+        font-weight: 700;
+        color: var(--text-primary);
+        font-size: 12px;
+    }
+    
+    /* Status Badge */
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 4px 10px;
+        border-radius: 12px;
+        font-size: 10px;
+        font-weight: 600;
+    }
+    
+    .status-badge.complete { background: rgba(0, 147, 176, 0.1); color: #0093b0; }
+    .status-badge.partial { background: rgba(61, 90, 115, 0.1); color: #3d5a73; }
+    .status-badge.missing { background: rgba(220, 53, 69, 0.1); color: #dc3545; }
+    
+    /* Empty State */
+    .empty-state {
+        padding: 40px 20px;
+        text-align: center;
+        color: var(--text-muted);
+    }
+    
+    .empty-state-icon {
+        font-size: 40px;
+        margin-bottom: 12px;
+        opacity: 0.5;
+    }
+    
+    /* Dropdown Multi-Select para Empleados */
+    .dropdown-multiselect {
+        position: relative;
+    }
+    
+    .dropdown-toggle {
+        width: 100%;
+        padding: 10px 14px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background: white;
+        font-size: 13px;
+        text-align: left;
+        cursor: pointer;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        transition: all 0.2s;
+    }
+    
+    .dropdown-toggle:hover {
+        border-color: #0093b0;
+    }
+    
+    .dropdown-toggle.active {
+        border-color: #0093b0;
+        box-shadow: 0 0 0 3px rgba(0, 147, 176, 0.1);
+    }
+    
+    .dropdown-toggle-text {
+        flex: 1;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        color: var(--text-primary);
+    }
+    
+    .dropdown-toggle-text.placeholder {
+        color: var(--text-muted);
+    }
+    
+    .dropdown-toggle-arrow {
+        margin-left: 8px;
+        transition: transform 0.2s;
+    }
+    
+    .dropdown-toggle.active .dropdown-toggle-arrow {
+        transform: rotate(180deg);
+    }
+    
+    .dropdown-menu {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: white;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+        z-index: 9999;
+        display: none;
+        max-height: 250px;
+        overflow-y: auto;
+        margin-top: 4px;
+    }
+    
+    .dropdown-menu.show {
+        display: block;
+    }
+    
+    .dropdown-search {
+        padding: 8px 12px;
+        border-bottom: 1px solid var(--border);
+        position: sticky;
+        top: 0;
+        background: white;
+    }
+    
+    .dropdown-search input {
+        width: 100%;
+        padding: 8px 10px;
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        font-size: 12px;
+    }
+    
+    .dropdown-actions {
+        padding: 8px 12px;
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        gap: 8px;
+        background: #f8fafc;
+    }
+    
+    .dropdown-actions button {
+        padding: 4px 10px;
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        background: white;
+        font-size: 11px;
+        cursor: pointer;
+        color: var(--text-secondary);
+    }
+    
+    .dropdown-actions button:hover {
+        background: #f0f0f0;
+    }
+    
+    .dropdown-item {
+        padding: 8px 12px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        cursor: pointer;
+        transition: background 0.15s;
+        font-size: 13px;
+    }
+    
+    .dropdown-item:hover {
+        background: #f0f9ff;
+    }
+    
+    .dropdown-item input[type="checkbox"] {
+        width: 16px;
+        height: 16px;
+        cursor: pointer;
+        accent-color: #0093b0;
+    }
+    
+    .dropdown-item label {
+        flex: 1;
+        cursor: pointer;
+        color: var(--text-primary);
+    }
+    
+    .dropdown-count {
+        background: #0093b0;
+        color: white;
+        padding: 2px 8px;
+        border-radius: 10px;
+        font-size: 11px;
+        font-weight: 600;
+    }
+    
+    /* Reports Grid */
+    .reports-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 16px;
+        margin-bottom: 16px;
+    }
+    
+    .report-card {
+        background: white;
+        border-radius: 16px;
+        border: 1px solid var(--border);
+        overflow: visible;
+    }
+    
+    .report-card-header {
+        padding: 20px 24px;
+        background: linear-gradient(135deg, #1e3a5f, #3d5a73);
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        border-radius: 16px 16px 0 0;
+    }
+    
+    .report-card-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 12px;
+        background: rgba(255,255,255,0.2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 22px;
+    }
+    
+    .report-card-info h3 {
+        font-size: 16px;
+        font-weight: 600;
+        color: white;
+        margin-bottom: 2px;
+    }
+    
+    .report-card-info p {
+        font-size: 13px;
+        color: rgba(255,255,255,0.8);
+    }
+    
+    .report-card-body { 
+        padding: 24px; 
+        overflow: visible;
+        position: relative;
+    }
+    
+    /* Form */
+    .form-row {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 16px;
+        margin-bottom: 20px;
+    }
+    
+    .form-group { display: flex; flex-direction: column; }
+    
+    .form-label {
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--text-secondary);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 8px;
+    }
+    
+    .form-select {
+        padding: 12px 16px;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        font-size: 14px;
+        background: white;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    
+    .form-select:focus {
+        outline: none;
+        border-color: #0093b0;
+        box-shadow: 0 0 0 3px rgba(0, 147, 176, 0.1);
+    }
+    
+    .btn-generate {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        width: 100%;
+        padding: 14px;
+        border: none;
+        border-radius: 10px;
+        font-size: 15px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+        background: linear-gradient(135deg, #0093b0, #007a94);
+        color: white;
+    }
+    
+    .btn-generate:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(0, 147, 176, 0.3);
+    }
+    
+    /* Summary Card */
+    .summary-card {
+        background: white;
+        border-radius: 16px;
+        border: 1px solid var(--border);
+        overflow: hidden;
+    }
+    
+    .summary-card-header {
+        padding: 16px 24px;
+        background: linear-gradient(135deg, #3d5a73, #1e3a5f);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+    
+    .summary-card-title {
+        font-size: 16px;
+        font-weight: 600;
+        color: white;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .summary-filters {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+    }
+    
+    .summary-filters select {
+        padding: 8px 14px;
+        border: none;
+        border-radius: 8px;
+        font-size: 13px;
+        background: rgba(255,255,255,0.9);
+    }
+    
+    .btn-view-summary {
+        padding: 8px 16px;
+        background: white;
+        color: #1e3a5f;
+        border: none;
+        border-radius: 8px;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+    }
+    
+    /* Summary Table */
+    .summary-table { width: 100%; border-collapse: collapse; }
+    
+    .summary-table th {
+        padding: 14px 20px;
+        font-size: 11px;
+        font-weight: 600;
+        color: var(--text-secondary);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        background: var(--bg-main);
+        text-align: left;
+        border-bottom: 1px solid var(--border);
+    }
+    
+    .summary-table td {
+        padding: 16px 20px;
+        font-size: 14px;
+        border-bottom: 1px solid var(--border-light);
+    }
+    
+    .summary-table tr:hover { background: var(--bg-light); }
+    
+    .hours-badge {
+        display: inline-flex;
+        padding: 6px 12px;
+        background: rgba(0, 147, 176, 0.1);
+        color: #0093b0;
+        border-radius: 20px;
+        font-weight: 600;
+        font-size: 13px;
+    }
+    
+    .btn-download {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 12px;
+        background: rgba(61, 90, 115, 0.1);
+        color: #3d5a73;
+        border: none;
+        border-radius: 8px;
+        font-size: 13px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    
+    .btn-download:hover { background: #0093b0; color: white; }
+    
+    @media (max-width: 1024px) {
+        .reports-grid { grid-template-columns: 1fr; }
+        .form-row { grid-template-columns: 1fr; }
+        .week-selector { flex-direction: column; gap: 16px; }
+        .summary-stats { flex-wrap: wrap; justify-content: center; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header-card">
+    <h1>📊 Reportes y Seguimiento</h1>
+    <p>Monitorea las actividades de los empleados y genera reportes</p>
+</div>
+
+<div class="main-tabs">
+    <button class="main-tab active" onclick="switchTab('seguimiento', this)">
+        <span>📋</span> Seguimiento Semanal
+        <span class="badge" id="pendingBadge">0</span>
+    </button>
+    <button class="main-tab" onclick="switchTab('mensual', this)">
+        <span>📅</span> Reporte Mensual
+    </button>
+    <button class="main-tab" onclick="switchTab('semanal', this)">
+        <span>📄</span> Reporte Semanal
+    </button>
+</div>
+
+<!-- TAB: SEGUIMIENTO -->
+<div id="tab-seguimiento" class="tab-content active">
+    <div class="week-selector">
+        <div class="week-nav">
+            <button class="week-nav-btn" onclick="cambiarSemana(-1)">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"></polyline></svg>
+            </button>
+            <div class="week-display">
+                <div class="week-label">Semana Actual</div>
+                <div class="week-dates" id="weekDates">-</div>
+            </div>
+            <button class="week-nav-btn" onclick="cambiarSemana(1)">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+            </button>
+        </div>
+        <div class="summary-stats">
+            <div class="summary-stat complete">✅ <span id="countComplete">0</span> completos</div>
+            <div class="summary-stat partial">⚠️ <span id="countPartial">0</span> parciales</div>
+            <div class="summary-stat missing">❌ <span id="countMissing">0</span> sin capturar</div>
+        </div>
+    </div>
+    
+    <div class="tracking-card">
+        <div class="tracking-card-header">
+            <h3 class="tracking-card-title"><span>👥</span> Seguimiento de Empleados</h3>
+            <div class="tracking-actions">
+                <button class="btn-action btn-reminder" onclick="enviarRecordatorios()">📧 Enviar recordatorio</button>
+                <button class="btn-action btn-export" onclick="exportarExcel()">📥 Exportar</button>
+            </div>
+        </div>
+        <table class="tracking-table">
+            <thead>
+                <tr>
+                    <th>Empleado</th>
+                    <th><span class="day-num" id="numLun"></span><br>LUN</th>
+                    <th><span class="day-num" id="numMar"></span><br>MAR</th>
+                    <th><span class="day-num" id="numMie"></span><br>MIÉ</th>
+                    <th><span class="day-num" id="numJue"></span><br>JUE</th>
+                    <th><span class="day-num" id="numVie"></span><br>VIE</th>
+                    <th>Total</th>
+                    <th>Estado</th>
+                </tr>
+            </thead>
+            <tbody id="trackingTableBody"></tbody>
+        </table>
+    </div>
+</div>
+
+<!-- TAB: REPORTE MENSUAL -->
+<div id="tab-mensual" class="tab-content">
+    <div class="reports-grid">
+        <div class="report-card">
+            <div class="report-card-header">
+                <div class="report-card-icon">📅</div>
+                <div class="report-card-info">
+                    <h3>Generar Reporte Mensual</h3>
+                    <p>PDF con el detalle de horas del mes</p>
+                </div>
+            </div>
+            <div class="report-card-body">
+                <div class="form-row" style="grid-template-columns: 1fr 1fr 1fr 1fr;">
+                    <div class="form-group">
+                        <label class="form-label">Filtrar por</label>
+                        <select id="filtroTipoMensual" class="form-select" onchange="cambiarFiltroMensual()">
+                            <option value="empleado">Empleados</option>
+                            <option value="supervisor">Supervisor</option>
+                            <option value="proyecto">Proyecto</option>
+                        </select>
+                    </div>
+                    <div class="form-group" id="filtroEmpleadoMensualGroup">
+                        <label class="form-label">Empleados</label>
+                        <div class="dropdown-multiselect" id="dropdownEmpleadosMensual">
+                            <button type="button" class="dropdown-toggle" onclick="toggleDropdown('empleadosMensual')">
+                                <span class="dropdown-toggle-text placeholder">Seleccionar empleados...</span>
+                                <span class="dropdown-toggle-arrow">▼</span>
+                            </button>
+                            <div class="dropdown-menu" id="menuEmpleadosMensual">
+                                <div class="dropdown-search">
+                                    <input type="text" placeholder="Buscar empleado..." oninput="filtrarEmpleados('mensual', this.value)">
+                                </div>
+                                <div class="dropdown-actions">
+                                    <button type="button" onclick="seleccionarTodos('mensual')">Seleccionar todos</button>
+                                    <button type="button" onclick="deseleccionarTodos('mensual')">Limpiar</button>
+                                </div>
+                                <div class="dropdown-items" id="itemsEmpleadosMensual">
+                                    <!-- Se llena dinámicamente -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group" id="filtroSupervisorMensualGroup" style="display:none;">
+                        <label class="form-label">Supervisor</label>
+                        <select id="supervisorMensual" class="form-select">
+                            <option value="">Todos los empleados del supervisor...</option>
+                        </select>
+                    </div>
+                    <div class="form-group" id="filtroProyectoMensualGroup" style="display:none;">
+                        <label class="form-label">Proyecto</label>
+                        <select id="proyectoMensual" class="form-select">
+                            <option value="">Todos los empleados del proyecto...</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Mes</label>
+                        <select id="mesMensual" class="form-select">
+                            <option value="1">Enero</option><option value="2">Febrero</option><option value="3">Marzo</option>
+                            <option value="4">Abril</option><option value="5">Mayo</option><option value="6">Junio</option>
+                            <option value="7">Julio</option><option value="8">Agosto</option><option value="9">Septiembre</option>
+                            <option value="10">Octubre</option><option value="11">Noviembre</option><option value="12">Diciembre</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Año</label>
+                        <select id="anioMensual" class="form-select">
+                            <option value="2026">2026</option>
+                            <option value="2025">2025</option>
+                        </select>
+                    </div>
+                </div>
+                <button class="btn-generate" onclick="generarReporteMensual()">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                    Generar PDF(s) Mensual
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="summary-card">
+        <div class="summary-card-header">
+            <h3 class="summary-card-title"><span>📊</span> Resumen de Actividades del Mes</h3>
+            <div class="summary-filters">
+                <select id="resumenMes">
+                    <option value="1">Enero</option><option value="2">Febrero</option><option value="3">Marzo</option>
+                    <option value="4">Abril</option><option value="5">Mayo</option><option value="6">Junio</option>
+                    <option value="7">Julio</option><option value="8">Agosto</option><option value="9">Septiembre</option>
+                    <option value="10">Octubre</option><option value="11">Noviembre</option><option value="12">Diciembre</option>
+                </select>
+                <select id="resumenAnio">
+                    <option value="2026">2026</option>
+                    <option value="2025">2025</option>
+                </select>
+                <button class="btn-view-summary" onclick="cargarResumen()">Ver Resumen</button>
+            </div>
+        </div>
+        <div id="resumenContainer">
+            <div class="empty-state"><div class="empty-state-icon">📊</div><p>Selecciona mes y año para ver el resumen</p></div>
+        </div>
+    </div>
+</div>
+
+<!-- TAB: REPORTE SEMANAL -->
+<div id="tab-semanal" class="tab-content">
+    <div class="reports-grid">
+        <div class="report-card">
+            <div class="report-card-header">
+                <div class="report-card-icon">📋</div>
+                <div class="report-card-info">
+                    <h3>Generar Reporte Semanal</h3>
+                    <p>Detalle de actividades de la semana</p>
+                </div>
+            </div>
+            <div class="report-card-body">
+                <div class="form-row" style="grid-template-columns: 1fr 1fr 1fr 1fr;">
+                    <div class="form-group">
+                        <label class="form-label">Filtrar por</label>
+                        <select id="filtroTipoSemanal" class="form-select" onchange="cambiarFiltroSemanal()">
+                            <option value="empleado">Empleados</option>
+                            <option value="supervisor">Supervisor</option>
+                            <option value="proyecto">Proyecto</option>
+                        </select>
+                    </div>
+                    <div class="form-group" id="filtroEmpleadoSemanalGroup">
+                        <label class="form-label">Empleados</label>
+                        <div class="dropdown-multiselect" id="dropdownEmpleadosSemanal">
+                            <button type="button" class="dropdown-toggle" onclick="toggleDropdown('empleadosSemanal')">
+                                <span class="dropdown-toggle-text placeholder">Seleccionar empleados...</span>
+                                <span class="dropdown-toggle-arrow">▼</span>
+                            </button>
+                            <div class="dropdown-menu" id="menuEmpleadosSemanal">
+                                <div class="dropdown-search">
+                                    <input type="text" placeholder="Buscar empleado..." oninput="filtrarEmpleados('semanal', this.value)">
+                                </div>
+                                <div class="dropdown-actions">
+                                    <button type="button" onclick="seleccionarTodos('semanal')">Seleccionar todos</button>
+                                    <button type="button" onclick="deseleccionarTodos('semanal')">Limpiar</button>
+                                </div>
+                                <div class="dropdown-items" id="itemsEmpleadosSemanal">
+                                    <!-- Se llena dinámicamente -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group" id="filtroSupervisorSemanalGroup" style="display:none;">
+                        <label class="form-label">Supervisor</label>
+                        <select id="supervisorSemanal" class="form-select">
+                            <option value="">Todos los empleados del supervisor...</option>
+                        </select>
+                    </div>
+                    <div class="form-group" id="filtroProyectoSemanalGroup" style="display:none;">
+                        <label class="form-label">Proyecto</label>
+                        <select id="proyectoSemanal" class="form-select">
+                            <option value="">Todos los empleados del proyecto...</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Fecha de la semana</label>
+                        <input type="date" id="fechaSemanal" class="form-select">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">&nbsp;</label>
+                        <div style="padding:12px;text-align:center;color:var(--text-secondary);font-size:13px;">Semana completa (L-D)</div>
+                    </div>
+                </div>
+                <button class="btn-generate" onclick="generarReporteSemanal()">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                    Generar PDF(s) Semanal
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let currentWeekStart = getMonday(new Date());
+let empleadosData = [];
+
+function getMonday(d) {
+    d = new Date(d);
+    const day = d.getDay();
+    const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+    return new Date(d.setDate(diff));
+}
+
+function formatDate(date) {
+    const months = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+    return `${date.getDate().toString().padStart(2,'0')}-${months[date.getMonth()]}`;
+}
+
+function formatDateISO(date) { return date.toISOString().split('T')[0]; }
+
+function switchTab(tab, btn) {
+    document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+    document.querySelectorAll('.main-tab').forEach(el => el.classList.remove('active'));
+    document.getElementById(`tab-${tab}`).classList.add('active');
+    btn.classList.add('active');
+}
+
+function cambiarSemana(delta) {
+    currentWeekStart.setDate(currentWeekStart.getDate() + (delta * 7));
+    actualizarVistasSemana();
+    cargarSeguimiento();
+}
+
+function actualizarVistasSemana() {
+    const weekEnd = new Date(currentWeekStart);
+    weekEnd.setDate(weekEnd.getDate() + 4);
+    document.getElementById('weekDates').textContent = `${formatDate(currentWeekStart)} al ${formatDate(weekEnd)} ${currentWeekStart.getFullYear()}`;
+    
+    // Actualizar números de día en encabezados
+    for (let i = 0; i < 5; i++) {
+        const fecha = new Date(currentWeekStart);
+        fecha.setDate(fecha.getDate() + i);
+        const ids = ['numLun', 'numMar', 'numMie', 'numJue', 'numVie'];
+        document.getElementById(ids[i]).textContent = fecha.getDate();
+    }
+}
+
+// Variables para selección de empleados
+let empleadosSeleccionadosMensual = new Set();
+let empleadosSeleccionadosSemanal = new Set();
+
+async function cargarEmpleados() {
+    try {
+        const response = await fetch('/api/empleados/');
+        if (response.ok) {
+            empleadosData = await response.json();
+            
+            // Llenar dropdowns de empleados
+            llenarDropdownEmpleados('mensual');
+            llenarDropdownEmpleados('semanal');
+        }
+        
+        // Cargar supervisores y proyectos
+        await cargarCatalogos();
+    } catch (e) { console.error(e); }
+}
+
+function llenarDropdownEmpleados(tipo) {
+    const container = document.getElementById(`itemsEmpleados${tipo.charAt(0).toUpperCase() + tipo.slice(1)}`);
+    container.innerHTML = '';
+    
+    empleadosData.forEach(emp => {
+        const item = document.createElement('div');
+        item.className = 'dropdown-item';
+        item.dataset.id = emp.id;
+        item.dataset.nombre = `${emp.nombre} ${emp.apellidos}`.toLowerCase();
+        item.innerHTML = `
+            <input type="checkbox" id="emp_${tipo}_${emp.id}" onchange="toggleEmpleado('${tipo}', '${emp.id}')">
+            <label for="emp_${tipo}_${emp.id}">${emp.nombre} ${emp.apellidos}</label>
+        `;
+        container.appendChild(item);
+    });
+}
+
+function toggleDropdown(dropdown) {
+    const menu = document.getElementById(`menu${dropdown.charAt(0).toUpperCase() + dropdown.slice(1)}`);
+    const toggle = menu.previousElementSibling;
+    
+    // Cerrar otros dropdowns
+    document.querySelectorAll('.dropdown-menu.show').forEach(m => {
+        if (m !== menu) {
+            m.classList.remove('show');
+            m.previousElementSibling.classList.remove('active');
+        }
+    });
+    
+    menu.classList.toggle('show');
+    toggle.classList.toggle('active');
+}
+
+function toggleEmpleado(tipo, empId) {
+    const set = tipo === 'mensual' ? empleadosSeleccionadosMensual : empleadosSeleccionadosSemanal;
+    
+    if (set.has(empId)) {
+        set.delete(empId);
+    } else {
+        set.add(empId);
+    }
+    
+    actualizarTextoDropdown(tipo);
+}
+
+function actualizarTextoDropdown(tipo) {
+    const set = tipo === 'mensual' ? empleadosSeleccionadosMensual : empleadosSeleccionadosSemanal;
+    const toggle = document.querySelector(`#dropdownEmpleados${tipo.charAt(0).toUpperCase() + tipo.slice(1)} .dropdown-toggle-text`);
+    
+    if (set.size === 0) {
+        toggle.textContent = 'Seleccionar empleados...';
+        toggle.classList.add('placeholder');
+    } else if (set.size === 1) {
+        const emp = empleadosData.find(e => e.id === Array.from(set)[0]);
+        toggle.textContent = emp ? `${emp.nombre} ${emp.apellidos}` : '1 empleado';
+        toggle.classList.remove('placeholder');
+    } else {
+        toggle.textContent = `${set.size} empleados seleccionados`;
+        toggle.classList.remove('placeholder');
+    }
+}
+
+function seleccionarTodos(tipo) {
+    const set = tipo === 'mensual' ? empleadosSeleccionadosMensual : empleadosSeleccionadosSemanal;
+    const container = document.getElementById(`itemsEmpleados${tipo.charAt(0).toUpperCase() + tipo.slice(1)}`);
+    
+    // Solo seleccionar los que están visibles (no filtrados)
+    container.querySelectorAll('.dropdown-item:not([style*="display: none"]) input[type="checkbox"]').forEach(cb => {
+        cb.checked = true;
+        set.add(cb.id.split('_')[2]);
+    });
+    
+    actualizarTextoDropdown(tipo);
+}
+
+function deseleccionarTodos(tipo) {
+    const set = tipo === 'mensual' ? empleadosSeleccionadosMensual : empleadosSeleccionadosSemanal;
+    const container = document.getElementById(`itemsEmpleados${tipo.charAt(0).toUpperCase() + tipo.slice(1)}`);
+    
+    container.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+        cb.checked = false;
+    });
+    
+    set.clear();
+    actualizarTextoDropdown(tipo);
+}
+
+function filtrarEmpleados(tipo, texto) {
+    const container = document.getElementById(`itemsEmpleados${tipo.charAt(0).toUpperCase() + tipo.slice(1)}`);
+    const items = container.querySelectorAll('.dropdown-item');
+    const busqueda = texto.toLowerCase();
+    
+    items.forEach(item => {
+        const nombre = item.dataset.nombre;
+        item.style.display = nombre.includes(busqueda) ? '' : 'none';
+    });
+}
+
+// Cerrar dropdowns al hacer clic fuera
+document.addEventListener('click', (e) => {
+    if (!e.target.closest('.dropdown-multiselect')) {
+        document.querySelectorAll('.dropdown-menu.show').forEach(menu => {
+            menu.classList.remove('show');
+            menu.previousElementSibling.classList.remove('active');
+        });
+    }
+});
+
+async function cargarCatalogos() {
+    try {
+        const [supervisores, proyectos] = await Promise.all([
+            fetch('/api/catalogos/supervisores').then(r => r.json()),
+            fetch('/api/catalogos/proyectos').then(r => r.json())
+        ]);
+        
+        // Llenar selects de supervisores
+        ['supervisorMensual', 'supervisorSemanal'].forEach(id => {
+            const select = document.getElementById(id);
+            select.innerHTML = '<option value="">Seleccionar supervisor...</option>';
+            supervisores.forEach(s => {
+                select.innerHTML += `<option value="${s.id}">${s.nombre}</option>`;
+            });
+        });
+        
+        // Llenar selects de proyectos
+        ['proyectoMensual', 'proyectoSemanal'].forEach(id => {
+            const select = document.getElementById(id);
+            select.innerHTML = '<option value="">Seleccionar proyecto...</option>';
+            proyectos.forEach(p => {
+                select.innerHTML += `<option value="${p.id}">${p.nombre}</option>`;
+            });
+        });
+    } catch (e) { console.error(e); }
+}
+
+function cambiarFiltroMensual() {
+    const tipo = document.getElementById('filtroTipoMensual').value;
+    document.getElementById('filtroEmpleadoMensualGroup').style.display = tipo === 'empleado' ? 'block' : 'none';
+    document.getElementById('filtroSupervisorMensualGroup').style.display = tipo === 'supervisor' ? 'block' : 'none';
+    document.getElementById('filtroProyectoMensualGroup').style.display = tipo === 'proyecto' ? 'block' : 'none';
+}
+
+function cambiarFiltroSemanal() {
+    const tipo = document.getElementById('filtroTipoSemanal').value;
+    document.getElementById('filtroEmpleadoSemanalGroup').style.display = tipo === 'empleado' ? 'block' : 'none';
+    document.getElementById('filtroSupervisorSemanalGroup').style.display = tipo === 'supervisor' ? 'block' : 'none';
+    document.getElementById('filtroProyectoSemanalGroup').style.display = tipo === 'proyecto' ? 'block' : 'none';
+}
+
+function obtenerEmpleadosSeleccionados(tipo, tipoReporte) {
+    if (tipo === 'empleado') {
+        const set = tipoReporte === 'mensual' ? empleadosSeleccionadosMensual : empleadosSeleccionadosSemanal;
+        return Array.from(set);
+    } else if (tipo === 'supervisor') {
+        const selectId = tipoReporte === 'mensual' ? 'supervisorMensual' : 'supervisorSemanal';
+        const supervisorId = document.getElementById(selectId).value;
+        if (!supervisorId) return [];
+        const supervisorNombre = document.getElementById(selectId).selectedOptions[0]?.text;
+        return empleadosData
+            .filter(emp => emp.supervisor === supervisorNombre)
+            .map(emp => emp.id);
+    } else if (tipo === 'proyecto') {
+        const selectId = tipoReporte === 'mensual' ? 'proyectoMensual' : 'proyectoSemanal';
+        const proyectoId = document.getElementById(selectId).value;
+        if (!proyectoId) return [];
+        const proyectoNombre = document.getElementById(selectId).selectedOptions[0]?.text;
+        return empleadosData
+            .filter(emp => emp.proyecto === proyectoNombre)
+            .map(emp => emp.id);
+    }
+    return [];
+}
+
+async function cargarSeguimiento() {
+    const tbody = document.getElementById('trackingTableBody');
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:40px;">Cargando...</td></tr>';
+    
+    try {
+        const fechaInicio = formatDateISO(currentWeekStart);
+        const response = await fetch(`/api/actividades/admin/seguimiento-semanal?fecha_inicio=${fechaInicio}`);
+        if (response.ok) {
+            const data = await response.json();
+            renderizarSeguimiento(data);
+        } else {
+            tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:40px;color:var(--text-muted);">Error al cargar datos</td></tr>';
+            document.getElementById('countComplete').textContent = 0;
+            document.getElementById('countPartial').textContent = 0;
+            document.getElementById('countMissing').textContent = 0;
+            document.getElementById('pendingBadge').textContent = 0;
+        }
+    } catch (e) {
+        console.error('Error:', e);
+        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:40px;color:var(--text-muted);">Error de conexión</td></tr>';
+    }
+}
+
+function renderizarSeguimiento(data) {
+    let html = '', complete = 0, partial = 0, missing = 0;
+    
+    data.forEach(emp => {
+        const d = emp.dias || {};
+        const vals = [d.lunes||0, d.martes||0, d.miercoles||0, d.jueves||0, d.viernes||0];
+        const total = vals.reduce((a,b)=>a+b,0);
+        const filled = vals.filter(v=>v>0).length;
+        
+        let status, statusText;
+        if (filled===5) { status='complete'; statusText='✅ Completo'; complete++; }
+        else if (filled>0) { status='partial'; statusText=`⚠️ ${filled}/5`; partial++; }
+        else { status='missing'; statusText='❌ Sin captura'; missing++; }
+        
+        const initials = (emp.nombre?.[0]||'')+(emp.apellidos?.[0]||'');
+        html += `<tr>
+            <td><div class="employee-cell"><div class="employee-avatar">${initials}</div><div class="employee-info"><span class="employee-name">${emp.nombre} ${emp.apellidos}</span><span class="employee-position">${emp.puesto||''}</span></div></div></td>
+            ${vals.map(v=>`<td class="day-cell"><span class="day-hours ${v?'filled':'empty'}">${v?v+'h':'-'}</span></td>`).join('')}
+            <td class="total-hours">${total}h</td>
+            <td><span class="status-badge ${status}">${statusText}</span></td>
+        </tr>`;
+    });
+    
+    document.getElementById('trackingTableBody').innerHTML = html || '<tr><td colspan="8" class="empty-state"><p>No hay datos</p></td></tr>';
+    document.getElementById('countComplete').textContent = complete;
+    document.getElementById('countPartial').textContent = partial;
+    document.getElementById('countMissing').textContent = missing;
+    document.getElementById('pendingBadge').textContent = partial + missing;
+}
+
+async function generarReporteMensual() {
+    const tipo = document.getElementById('filtroTipoMensual').value;
+    let empleadosIds = [];
+    
+    if (tipo === 'empleado') {
+        empleadosIds = Array.from(empleadosSeleccionadosMensual);
+    } else if (tipo === 'supervisor') {
+        const supervisorNombre = document.getElementById('supervisorMensual').selectedOptions[0]?.text;
+        if (!supervisorNombre || supervisorNombre.includes('Seleccionar')) {
+            return alert('Selecciona un supervisor');
+        }
+        empleadosIds = empleadosData.filter(emp => emp.supervisor === supervisorNombre).map(emp => emp.id);
+    } else if (tipo === 'proyecto') {
+        const proyectoNombre = document.getElementById('proyectoMensual').selectedOptions[0]?.text;
+        if (!proyectoNombre || proyectoNombre.includes('Seleccionar')) {
+            return alert('Selecciona un proyecto');
+        }
+        empleadosIds = empleadosData.filter(emp => emp.proyecto === proyectoNombre).map(emp => emp.id);
+    }
+    
+    if (empleadosIds.length === 0) {
+        return alert('Selecciona al menos un empleado');
+    }
+    
+    const anio = document.getElementById('anioMensual').value;
+    const mes = document.getElementById('mesMensual').value;
+    
+    // Generar un PDF por cada empleado seleccionado
+    for (const empId of empleadosIds) {
+        window.open(`/api/reportes/admin/reporte-mensual/${empId}/${anio}/${mes}`, '_blank');
+        // Pequeña pausa para evitar bloqueo de popups
+        await new Promise(r => setTimeout(r, 300));
+    }
+}
+
+async function generarReporteSemanal() {
+    const tipo = document.getElementById('filtroTipoSemanal').value;
+    let empleadosIds = [];
+    
+    if (tipo === 'empleado') {
+        empleadosIds = Array.from(empleadosSeleccionadosSemanal);
+    } else if (tipo === 'supervisor') {
+        const supervisorNombre = document.getElementById('supervisorSemanal').selectedOptions[0]?.text;
+        if (!supervisorNombre || supervisorNombre.includes('Seleccionar')) {
+            return alert('Selecciona un supervisor');
+        }
+        empleadosIds = empleadosData.filter(emp => emp.supervisor === supervisorNombre).map(emp => emp.id);
+    } else if (tipo === 'proyecto') {
+        const proyectoNombre = document.getElementById('proyectoSemanal').selectedOptions[0]?.text;
+        if (!proyectoNombre || proyectoNombre.includes('Seleccionar')) {
+            return alert('Selecciona un proyecto');
+        }
+        empleadosIds = empleadosData.filter(emp => emp.proyecto === proyectoNombre).map(emp => emp.id);
+    }
+    
+    if (empleadosIds.length === 0) {
+        return alert('Selecciona al menos un empleado');
+    }
+    
+    const fecha = document.getElementById('fechaSemanal').value;
+    
+    // Generar un PDF por cada empleado seleccionado
+    for (const empId of empleadosIds) {
+        let url = `/api/reportes/admin/reporte-semanal/${empId}`;
+        if (fecha) url += `?fecha=${fecha}`;
+        window.open(url, '_blank');
+        await new Promise(r => setTimeout(r, 300));
+    }
+}
+
+async function cargarResumen() {
+    const mes = document.getElementById('resumenMes').value;
+    const anio = document.getElementById('resumenAnio').value;
+    const container = document.getElementById('resumenContainer');
+    container.innerHTML = '<div class="empty-state"><p>Cargando...</p></div>';
+    
+    try {
+        const response = await fetch(`/api/actividades/admin/resumen-mensual?mes=${mes}&anio=${anio}`);
+        if (response.ok) {
+            const data = await response.json();
+            if (!data.length) {
+                container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📭</div><p>No hay datos para este mes</p></div>';
+                return;
+            }
+            let html = '<table class="summary-table"><thead><tr><th>Empleado</th><th>Total Horas</th><th>Días</th><th>Promedio</th><th>Acciones</th></tr></thead><tbody>';
+            data.forEach(emp => {
+                const initials = (emp.nombre?.[0]||'')+(emp.apellidos?.[0]||'');
+                const prom = emp.dias_capturados>0?(emp.total_horas/emp.dias_capturados).toFixed(1):'0';
+                html += `<tr>
+                    <td><div class="employee-cell"><div class="employee-avatar">${initials}</div><span class="employee-name">${emp.nombre} ${emp.apellidos}</span></div></td>
+                    <td><span class="hours-badge">${emp.total_horas||0} hrs</span></td>
+                    <td>${emp.dias_capturados||0} días</td>
+                    <td>${prom} hrs/día</td>
+                    <td><button class="btn-download" onclick="window.open('/api/reportes/admin/reporte-mensual/${emp.empleado_id}/${anio}/${mes}','_blank')">📄 PDF</button></td>
+                </tr>`;
+            });
+            container.innerHTML = html + '</tbody></table>';
+        }
+    } catch (e) {
+        container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">⚠️</div><p>Error al cargar</p></div>';
+    }
+}
+
+async function enviarRecordatorios() {
+    const pendientes = parseInt(document.getElementById('countPartial').textContent) + parseInt(document.getElementById('countMissing').textContent);
+    
+    if (pendientes === 0) {
+        alert('✅ Todos los empleados han completado sus actividades esta semana.');
+        return;
+    }
+    
+    if (!confirm(`¿Enviar recordatorio a ${pendientes} empleado(s) que no han completado sus actividades?`)) {
+        return;
+    }
+    
+    const btn = document.querySelector('.btn-reminder');
+    const textoOriginal = btn.innerHTML;
+    btn.innerHTML = '⏳ Enviando...';
+    btn.disabled = true;
+    
+    try {
+        const fechaInicio = formatDateISO(currentWeekStart);
+        const response = await fetch(`/api/actividades/admin/enviar-recordatorios?fecha_inicio=${fechaInicio}`, {
+            method: 'POST'
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+            let mensaje = `✅ ${data.enviados} recordatorio(s) enviado(s)`;
+            if (data.fallidos > 0) {
+                mensaje += `\n⚠️ ${data.fallidos} fallido(s)`;
+            }
+            alert(mensaje);
+        } else {
+            alert('❌ Error al enviar recordatorios: ' + (data.detail || 'Error desconocido'));
+        }
+    } catch (e) {
+        console.error('Error:', e);
+        alert('❌ Error de conexión al enviar recordatorios');
+    } finally {
+        btn.innerHTML = textoOriginal;
+        btn.disabled = false;
+    }
+}
+function exportarExcel() { alert('Funcionalidad en desarrollo'); }
+
+document.addEventListener('DOMContentLoaded', () => {
+    cargarEmpleados().then(() => {
+        cargarSeguimiento();
+        // Cargar resumen del mes actual automáticamente
+        cargarResumen();
+    });
+    actualizarVistasSemana();
+    
+    const now = new Date();
+    const mesActual = now.getMonth() + 1;
+    const anioActual = now.getFullYear();
+    
+    // Establecer mes actual
+    document.getElementById('mesMensual').value = mesActual;
+    document.getElementById('resumenMes').value = mesActual;
+    
+    // Establecer año actual
+    document.getElementById('anioMensual').value = anioActual;
+    document.getElementById('resumenAnio').value = anioActual;
+    
+    // Establecer fecha actual para reporte semanal
+    document.getElementById('fechaSemanal').value = now.toISOString().split('T')[0];
+});
+</script>
+{% endblock %}

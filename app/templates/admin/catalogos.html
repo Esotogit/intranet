@@ -1,0 +1,563 @@
+{% extends "base.html" %}
+
+{% block title %}Gestión de Catálogos - Administración{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Page Header Compacto - Homologado */
+    .page-header-card {
+        background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+        border-radius: 12px;
+        padding: 18px 24px;
+        color: white;
+        margin-bottom: 16px;
+        position: relative;
+        overflow: hidden;
+    }
+    .page-header-card::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -10%;
+        width: 300px;
+        height: 300px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 50%;
+    }
+    .page-header-card h1 { font-size: 20px; font-weight: 700; margin-bottom: 2px; position: relative; z-index: 1; }
+    .page-header-card p { opacity: 0.85; font-size: 13px; position: relative; z-index: 1; }
+    
+    /* Categorías de catálogos */
+    .catalog-categories {
+        display: flex;
+        gap: 24px;
+        margin-bottom: 16px;
+        flex-wrap: wrap;
+    }
+    
+    .category-group {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+    
+    .category-label {
+        font-size: 11px;
+        font-weight: 600;
+        color: var(--text-secondary);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        padding-left: 4px;
+    }
+    
+    .category-tabs {
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+    }
+    
+    .tab-btn {
+        padding: 8px 18px;
+        border: none;
+        background: white;
+        border-radius: 8px;
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--text-secondary);
+        cursor: pointer;
+        transition: all 0.2s;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+        border: 1px solid var(--border);
+    }
+    
+    .tab-btn:hover {
+        background: #f0f4ff;
+        color: #6366f1;
+        border-color: #c7d2fe;
+        transform: translateY(-1px);
+    }
+    
+    .tab-btn.active {
+        background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+        color: white;
+        border-color: transparent;
+        box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+    }
+    
+    .catalog-section {
+        background: white;
+        border-radius: 12px;
+        border: 1px solid var(--border);
+        overflow: hidden;
+    }
+    
+    .catalog-header {
+        padding: 14px 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid var(--border);
+        background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    }
+    
+    .catalog-header h3 {
+        font-size: 15px;
+        font-weight: 600;
+        color: var(--text-primary);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .catalog-header h3::before {
+        content: '📋';
+    }
+    
+    .btn-add {
+        padding: 8px 16px;
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        color: white;
+        border: none;
+        border-radius: 6px;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        transition: all 0.2s;
+    }
+    
+    .btn-add:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+    }
+    
+    .table-container {
+        padding: 0;
+    }
+    
+    .catalog-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    
+    .catalog-table th {
+        background: #f8fafc;
+        padding: 10px 16px;
+        text-align: left;
+        font-size: 10px;
+        font-weight: 600;
+        color: var(--text-secondary);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .catalog-table td {
+        padding: 10px 16px;
+        border-top: 1px solid var(--border);
+        font-size: 12px;
+        color: var(--text-primary);
+    }
+    
+    .catalog-table tr:hover {
+        background: #f8fafc;
+    }
+    
+    .actions-cell {
+        display: flex;
+        gap: 6px;
+    }
+    
+    .btn-edit, .btn-delete {
+        padding: 5px 12px;
+        border-radius: 5px;
+        font-size: 11px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+        border: 1px solid;
+    }
+    
+    .btn-edit {
+        background: white;
+        color: var(--text-secondary);
+        border-color: var(--border);
+    }
+    
+    .btn-edit:hover {
+        background: #f0f4ff;
+        color: #6366f1;
+        border-color: #c7d2fe;
+    }
+    
+    .btn-delete {
+        background: white;
+        color: #ef4444;
+        border-color: #fecaca;
+    }
+    
+    .btn-delete:hover {
+        background: #fef2f2;
+        border-color: #f87171;
+    }
+    
+    .empty-state {
+        padding: 60px 20px;
+        text-align: center;
+        color: var(--text-muted);
+    }
+    
+    /* Modal mejorado */
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0,0,0,0.5);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+        padding: 20px;
+    }
+    
+    .modal-overlay.show {
+        display: flex;
+    }
+    
+    .modal-box {
+        background: white;
+        border-radius: 16px;
+        width: 100%;
+        max-width: 450px;
+        overflow: hidden;
+    }
+    
+    .modal-header {
+        padding: 20px 24px;
+        background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+        color: white;
+    }
+    
+    .modal-header h3 {
+        font-size: 18px;
+        font-weight: 600;
+    }
+    
+    .modal-body {
+        padding: 24px;
+    }
+    
+    .form-group {
+        margin-bottom: 16px;
+    }
+    
+    .form-group label {
+        display: block;
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: 6px;
+    }
+    
+    .form-group input {
+        width: 100%;
+        padding: 10px 14px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        font-size: 14px;
+        transition: all 0.2s;
+        box-sizing: border-box;
+    }
+    
+    .form-group input:focus {
+        outline: none;
+        border-color: #6366f1;
+        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+    }
+    
+    .modal-footer {
+        padding: 16px 24px;
+        border-top: 1px solid var(--border);
+        display: flex;
+        justify-content: flex-end;
+        gap: 12px;
+    }
+    
+    .btn-cancel {
+        padding: 10px 20px;
+        background: var(--bg-main);
+        color: var(--text-secondary);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        font-size: 14px;
+        cursor: pointer;
+    }
+    
+    .btn-save {
+        padding: 10px 24px;
+        background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+    }
+    
+    .btn-save:hover {
+        box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header-card">
+    <h1>⚙️ Gestión de Catálogos</h1>
+    <p>Administra los catálogos del sistema</p>
+</div>
+
+<!-- Tabs de catálogos por categoría -->
+<div class="catalog-categories">
+    <!-- Categoría Empleados -->
+    <div class="category-group">
+        <span class="category-label">👥 Empleados</span>
+        <div class="category-tabs">
+            <button class="tab-btn active" onclick="mostrarCatalogo('puestos', this)">📁 Puestos</button>
+            <button class="tab-btn" onclick="mostrarCatalogo('supervisores', this)">👤 Supervisores</button>
+            <button class="tab-btn" onclick="mostrarCatalogo('ubicaciones', this)">📍 Ubicaciones</button>
+            <button class="tab-btn" onclick="mostrarCatalogo('proyectos', this)">📂 Proyectos</button>
+        </div>
+    </div>
+    
+    <!-- Categoría Inventario -->
+    <div class="category-group">
+        <span class="category-label">💻 Inventario</span>
+        <div class="category-tabs">
+            <button class="tab-btn" onclick="mostrarCatalogo('marcas', this)">🏷️ Marcas</button>
+        </div>
+    </div>
+</div>
+
+<!-- Contenido del catálogo -->
+<div class="catalog-section">
+    <div class="catalog-header">
+        <h3 id="catalogoTitulo">Puestos</h3>
+        <button class="btn-add" onclick="agregarItem()">➕ Agregar</button>
+    </div>
+    <div id="catalogoContenido" class="table-container">
+        <p class="empty-state">Cargando...</p>
+    </div>
+</div>
+
+<!-- Modal para agregar/editar -->
+<div id="modalCatalogo" class="modal-overlay">
+    <div class="modal-box">
+        <div class="modal-header">
+            <h3 id="modalTitulo">Agregar</h3>
+        </div>
+        <form id="catalogoForm">
+            <div class="modal-body">
+                <div id="formFields"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-cancel" onclick="cerrarModal()">Cancelar</button>
+                <button type="submit" class="btn-save">Guardar</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let catalogoActual = 'puestos';
+let editandoId = null;
+
+const catalogosConfig = {
+    puestos: {
+        titulo: 'Puestos',
+        endpoint: '/api/catalogos/puestos',
+        campos: [
+            { name: 'nombre', label: 'Nombre', type: 'text', required: true },
+            { name: 'dias_vacaciones_anuales', label: 'Días de vacaciones anuales', type: 'number', required: true }
+        ],
+        columnas: ['nombre', 'dias_vacaciones_anuales']
+    },
+    supervisores: {
+        titulo: 'Supervisores',
+        endpoint: '/api/catalogos/supervisores',
+        campos: [
+            { name: 'nombre', label: 'Nombre completo', type: 'text', required: true }
+        ],
+        columnas: ['nombre']
+    },
+    ubicaciones: {
+        titulo: 'Ubicaciones',
+        endpoint: '/api/catalogos/ubicaciones',
+        campos: [
+            { name: 'codigo', label: 'Código', type: 'text', required: true },
+            { name: 'nombre', label: 'Nombre', type: 'text', required: true }
+        ],
+        columnas: ['codigo', 'nombre']
+    },
+    proyectos: {
+        titulo: 'Proyectos',
+        endpoint: '/api/catalogos/proyectos',
+        campos: [
+            { name: 'nombre', label: 'Nombre del proyecto', type: 'text', required: true }
+        ],
+        columnas: ['nombre']
+    },
+    marcas: {
+        titulo: 'Marcas (Inventario)',
+        endpoint: '/api/catalogos/marcas',
+        campos: [
+            { name: 'nombre', label: 'Nombre de la marca', type: 'text', required: true }
+        ],
+        columnas: ['nombre']
+    }
+};
+
+function mostrarCatalogo(catalogo, btn) {
+    catalogoActual = catalogo;
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('catalogoTitulo').textContent = catalogosConfig[catalogo].titulo;
+    cargarCatalogo();
+}
+
+async function cargarCatalogo() {
+    const config = catalogosConfig[catalogoActual];
+    const container = document.getElementById('catalogoContenido');
+    
+    try {
+        const response = await fetch(config.endpoint);
+        if (response.ok) {
+            const items = await response.json();
+            
+            if (items.length === 0) {
+                container.innerHTML = '<p class="empty-state">No hay elementos en este catálogo</p>';
+                return;
+            }
+            
+            let html = '<table class="catalog-table"><thead><tr>';
+            config.columnas.forEach(col => {
+                const label = col.replace(/_/g, ' ').toUpperCase();
+                html += `<th>${label}</th>`;
+            });
+            html += '<th>ACCIONES</th></tr></thead><tbody>';
+            
+            items.forEach(item => {
+                html += '<tr>';
+                config.columnas.forEach(col => {
+                    html += `<td>${item[col] || '-'}</td>`;
+                });
+                html += `
+                    <td>
+                        <div class="actions-cell">
+                            <button class="btn-edit" onclick='editarItem(${JSON.stringify(item)})'>Editar</button>
+                            <button class="btn-delete" onclick="eliminarItem(${item.id})">Eliminar</button>
+                        </div>
+                    </td>
+                </tr>`;
+            });
+            
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
+    } catch (error) {
+        container.innerHTML = '<p class="empty-state">Error al cargar los datos</p>';
+    }
+}
+
+function agregarItem() {
+    editandoId = null;
+    const config = catalogosConfig[catalogoActual];
+    document.getElementById('modalTitulo').textContent = `Agregar ${config.titulo}`;
+    
+    let fieldsHtml = '';
+    config.campos.forEach(campo => {
+        fieldsHtml += `
+            <div class="form-group">
+                <label for="${campo.name}">${campo.label}</label>
+                <input type="${campo.type}" id="${campo.name}" name="${campo.name}" 
+                       ${campo.required ? 'required' : ''}>
+            </div>
+        `;
+    });
+    
+    document.getElementById('formFields').innerHTML = fieldsHtml;
+    document.getElementById('modalCatalogo').classList.add('show');
+}
+
+function editarItem(item) {
+    editandoId = item.id;
+    const config = catalogosConfig[catalogoActual];
+    document.getElementById('modalTitulo').textContent = `Editar ${config.titulo}`;
+    
+    let fieldsHtml = '';
+    config.campos.forEach(campo => {
+        fieldsHtml += `
+            <div class="form-group">
+                <label for="${campo.name}">${campo.label}</label>
+                <input type="${campo.type}" id="${campo.name}" name="${campo.name}" 
+                       value="${item[campo.name] || ''}" ${campo.required ? 'required' : ''}>
+            </div>
+        `;
+    });
+    
+    document.getElementById('formFields').innerHTML = fieldsHtml;
+    document.getElementById('modalCatalogo').classList.add('show');
+}
+
+function cerrarModal() {
+    document.getElementById('modalCatalogo').classList.remove('show');
+}
+
+document.getElementById('catalogoForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const config = catalogosConfig[catalogoActual];
+    const formData = {};
+    
+    config.campos.forEach(campo => {
+        let value = document.getElementById(campo.name).value;
+        if (campo.type === 'number') value = parseInt(value);
+        formData[campo.name] = value;
+    });
+    
+    const url = editandoId ? `${config.endpoint}/${editandoId}` : config.endpoint;
+    const method = editandoId ? 'PATCH' : 'POST';
+    
+    const response = await fetch(url, {
+        method: method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData)
+    });
+    
+    if (response.ok) {
+        cerrarModal();
+        cargarCatalogo();
+    } else {
+        alert('Error al guardar');
+    }
+});
+
+async function eliminarItem(id) {
+    if (!confirm('¿Eliminar este elemento?')) return;
+    
+    const config = catalogosConfig[catalogoActual];
+    const response = await fetch(`${config.endpoint}/${id}`, { method: 'DELETE' });
+    
+    if (response.ok) {
+        cargarCatalogo();
+    }
+}
+
+document.addEventListener('keydown', e => { if (e.key === 'Escape') cerrarModal(); });
+document.addEventListener('DOMContentLoaded', cargarCatalogo);
+</script>
+{% endblock %}

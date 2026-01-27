@@ -1,0 +1,1223 @@
+{% extends "base.html" %}
+
+{% block title %}Inventario de Equipos - Intranet{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Page Header Compacto */
+    .page-header-card {
+        background: linear-gradient(135deg, #1e3a5f 0%, #0093b0 100%);
+        border-radius: 12px;
+        padding: 18px 24px;
+        color: white;
+        margin-bottom: 16px;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .page-header-card::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -10%;
+        width: 300px;
+        height: 300px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 50%;
+    }
+    
+    .page-header-card h1 {
+        font-size: 20px;
+        font-weight: 700;
+        margin-bottom: 2px;
+        position: relative;
+        z-index: 1;
+    }
+    
+    .page-header-card p {
+        opacity: 0.85;
+        font-size: 13px;
+        position: relative;
+        z-index: 1;
+    }
+    
+    /* Stats Row - Igual que empleados */
+    .stats-row {
+        display: flex;
+        gap: 16px;
+        margin-bottom: 16px;
+    }
+    
+    .stat-card {
+        background: white;
+        border-radius: 10px;
+        padding: 14px 20px;
+        border: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        min-width: 140px;
+    }
+    
+    .stat-icon {
+        width: 36px;
+        height: 36px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 16px;
+    }
+    
+    .stat-icon.total { background: rgba(0, 147, 176, 0.1); }
+    .stat-icon.available { background: rgba(16, 185, 129, 0.1); }
+    .stat-icon.assigned { background: rgba(61, 90, 115, 0.1); }
+    .stat-icon.repair { background: rgba(245, 158, 11, 0.1); }
+    
+    .stat-value {
+        font-size: 22px;
+        font-weight: 700;
+        color: var(--text-primary);
+        line-height: 1;
+    }
+    
+    .stat-label {
+        font-size: 11px;
+        color: var(--text-muted);
+        text-transform: uppercase;
+    }
+    
+    /* Toolbar */
+    .toolbar {
+        background: white;
+        border-radius: 10px;
+        padding: 12px 16px;
+        border: 1px solid var(--border);
+        margin-bottom: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+    }
+    
+    .toolbar-left {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .filter-tabs {
+        display: flex;
+        gap: 6px;
+    }
+    
+    .filter-tab {
+        padding: 6px 14px;
+        border: 1px solid var(--border);
+        background: white;
+        border-radius: 6px;
+        font-size: 12px;
+        font-weight: 500;
+        color: var(--text-secondary);
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    
+    .filter-tab:hover {
+        border-color: #0093b0;
+        color: #0093b0;
+    }
+    
+    .filter-tab.active {
+        background: #0093b0;
+        border-color: #0093b0;
+        color: white;
+    }
+    
+    .search-box {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 14px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background: var(--bg-main);
+    }
+    
+    .search-box input {
+        border: none;
+        background: transparent;
+        outline: none;
+        font-size: 13px;
+        width: 180px;
+    }
+    
+    .btn-add {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 16px;
+        background: linear-gradient(135deg, #0093b0, #007a94);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    
+    .btn-add:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(0, 147, 176, 0.3);
+    }
+    
+    /* Table Card */
+    .table-card {
+        background: white;
+        border-radius: 12px;
+        border: 1px solid var(--border);
+        overflow: hidden;
+    }
+    
+    .table-card-header {
+        padding: 12px 20px;
+        background: linear-gradient(135deg, #1e3a5f, #3d5a73);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+    
+    .table-card-title {
+        font-size: 14px;
+        font-weight: 600;
+        color: white;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    /* Table Compacta */
+    .data-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    
+    .data-table th {
+        padding: 10px 12px;
+        font-size: 10px;
+        font-weight: 600;
+        color: var(--text-secondary);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        background: var(--bg-main);
+        text-align: left;
+        border-bottom: 1px solid var(--border);
+    }
+    
+    .data-table td {
+        padding: 8px 12px;
+        font-size: 12px;
+        border-bottom: 1px solid var(--border-light);
+    }
+    
+    .data-table tr:hover {
+        background: var(--bg-light);
+    }
+    
+    /* Equipo Cell Compacto */
+    .equipo-cell {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .equipo-icon {
+        width: 36px;
+        height: 36px;
+        border-radius: 8px;
+        background: linear-gradient(135deg, #0093b0, #007a94);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 16px;
+    }
+    
+    .equipo-info {
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .equipo-name {
+        font-weight: 600;
+        color: var(--text-primary);
+        font-size: 12px;
+    }
+    
+    .equipo-details {
+        font-size: 10px;
+        color: var(--text-muted);
+    }
+    
+    /* Empleado Cell Compacto */
+    .empleado-cell {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .empleado-avatar {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #3d5a73, #1e3a5f);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 10px;
+        font-weight: 600;
+    }
+    
+    /* Status Badge */
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+    }
+    
+    .status-badge.disponible { background: rgba(16, 185, 129, 0.1); color: #10b981; }
+    .status-badge.asignado { background: rgba(0, 147, 176, 0.1); color: #0093b0; }
+    .status-badge.en_reparacion { background: rgba(245, 158, 11, 0.1); color: #f59e0b; }
+    .status-badge.baja { background: rgba(239, 68, 68, 0.1); color: #ef4444; }
+    
+    /* Actions */
+    .actions-cell {
+        display: flex;
+        gap: 8px;
+    }
+    
+    .btn-icon {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        border: 1px solid var(--border);
+        background: white;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s;
+    }
+    
+    .btn-icon:hover {
+        background: var(--bg-main);
+        border-color: #0093b0;
+    }
+    
+    .btn-icon.assign {
+        background: rgba(0, 147, 176, 0.1);
+        border-color: #0093b0;
+        color: #0093b0;
+    }
+    
+    .btn-icon.edit {
+        color: #3d5a73;
+    }
+    
+    .btn-icon.delete {
+        color: #ef4444;
+    }
+    
+    .btn-icon.delete:hover {
+        background: rgba(239, 68, 68, 0.1);
+        border-color: #ef4444;
+    }
+    
+    /* Empty State */
+    .empty-state {
+        padding: 60px 20px;
+        text-align: center;
+    }
+    
+    .empty-state-icon {
+        font-size: 48px;
+        margin-bottom: 16px;
+        opacity: 0.5;
+    }
+    
+    .empty-state p {
+        color: var(--text-muted);
+    }
+    
+    /* Modal */
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+    }
+    
+    .modal-overlay.show {
+        display: flex;
+    }
+    
+    .modal {
+        background: white;
+        border-radius: 16px;
+        width: 100%;
+        max-width: 600px;
+        max-height: 90vh;
+        overflow-y: auto;
+    }
+    
+    .modal-header {
+        padding: 20px 24px;
+        background: linear-gradient(135deg, #1e3a5f, #3d5a73);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+    
+    .modal-header h3 {
+        font-size: 18px;
+        font-weight: 600;
+    }
+    
+    .modal-close {
+        background: none;
+        border: none;
+        color: white;
+        font-size: 24px;
+        cursor: pointer;
+        opacity: 0.8;
+    }
+    
+    .modal-close:hover {
+        opacity: 1;
+    }
+    
+    .modal-body {
+        padding: 24px;
+    }
+    
+    .modal-footer {
+        padding: 16px 24px;
+        border-top: 1px solid var(--border);
+        display: flex;
+        justify-content: flex-end;
+        gap: 12px;
+    }
+    
+    /* Form Styles */
+    .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+        margin-bottom: 16px;
+    }
+    
+    .form-row.single {
+        grid-template-columns: 1fr;
+    }
+    
+    .form-group {
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .form-label {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: 6px;
+    }
+    
+    .form-input,
+    .form-select,
+    .form-textarea {
+        padding: 10px 14px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        font-size: 14px;
+        transition: all 0.2s;
+    }
+    
+    .form-input:focus,
+    .form-select:focus,
+    .form-textarea:focus {
+        outline: none;
+        border-color: #0093b0;
+        box-shadow: 0 0 0 3px rgba(0, 147, 176, 0.1);
+    }
+    
+    .form-textarea {
+        min-height: 80px;
+        resize: vertical;
+    }
+    
+    .btn-cancel {
+        padding: 10px 20px;
+        background: var(--bg-main);
+        color: var(--text-secondary);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+    }
+    
+    .btn-save {
+        padding: 10px 20px;
+        background: linear-gradient(135deg, #0093b0, #007a94);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+    }
+    
+    .btn-save:hover {
+        box-shadow: 0 4px 12px rgba(0, 147, 176, 0.3);
+    }
+    
+    /* Toast */
+    .toast {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        padding: 16px 24px;
+        border-radius: 10px;
+        color: white;
+        font-weight: 500;
+        z-index: 2000;
+        display: none;
+        animation: slideIn 0.3s ease;
+    }
+    
+    .toast.show { display: block; }
+    .toast.success { background: #10b981; }
+    .toast.error { background: #ef4444; }
+    
+    @keyframes slideIn {
+        from { transform: translateX(100%); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
+    }
+    
+    /* Responsive */
+    @media (max-width: 1024px) {
+        .stats-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+        
+        .toolbar {
+            flex-direction: column;
+            align-items: stretch;
+        }
+        
+        .toolbar-left {
+            flex-wrap: wrap;
+        }
+        
+        .form-row {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="page-header-card">
+    <h1>💻 Inventario de Equipos</h1>
+    <p>Gestiona laptops, monitores y equipos asignados a empleados</p>
+</div>
+
+<!-- Stats Row -->
+<div class="stats-row">
+    <div class="stat-card">
+        <div class="stat-icon total">💻</div>
+        <div>
+            <div class="stat-value" id="totalEquipos">0</div>
+            <div class="stat-label">Total</div>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon available">✅</div>
+        <div>
+            <div class="stat-value" id="disponibles">0</div>
+            <div class="stat-label">Disponibles</div>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon assigned">👤</div>
+        <div>
+            <div class="stat-value" id="asignados">0</div>
+            <div class="stat-label">Asignados</div>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon repair">🔧</div>
+        <div>
+            <div class="stat-value" id="enReparacion">0</div>
+            <div class="stat-label">En reparación</div>
+        </div>
+    </div>
+</div>
+
+<!-- Toolbar -->
+<div class="toolbar">
+    <div class="toolbar-left">
+        <div class="filter-tabs">
+            <button class="filter-tab active" data-filter="todos">Todos</button>
+            <button class="filter-tab" data-filter="laptop">Laptops</button>
+            <button class="filter-tab" data-filter="monitor">Monitores</button>
+            <button class="filter-tab" data-filter="otro">Otros</button>
+        </div>
+        <div class="search-box">
+            <span>🔍</span>
+            <input type="text" id="searchInput" placeholder="Buscar equipo...">
+        </div>
+    </div>
+    <button class="btn-add" onclick="abrirModalNuevo()">
+        <span>➕</span> Nuevo Equipo
+    </button>
+</div>
+
+<!-- Table -->
+<div class="table-card">
+    <div class="table-card-header">
+        <h3 class="table-card-title">
+            <span>📋</span> Lista de Equipos
+        </h3>
+    </div>
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Equipo</th>
+                <th>No. Serie</th>
+                <th>No. Activo</th>
+                <th>Asignado a</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody id="equiposTableBody">
+            <tr>
+                <td colspan="6">
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📦</div>
+                        <p>Cargando equipos...</p>
+                    </div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+<!-- Modal Nuevo/Editar Equipo -->
+<div class="modal-overlay" id="modalEquipo">
+    <div class="modal">
+        <div class="modal-header">
+            <h3 id="modalTitle">Nuevo Equipo</h3>
+            <button class="modal-close" onclick="cerrarModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <form id="formEquipo">
+                <input type="hidden" id="equipoId">
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Tipo de Equipo *</label>
+                        <select id="tipo" class="form-select" required>
+                            <option value="">Seleccionar...</option>
+                            <option value="laptop">💻 Laptop</option>
+                            <option value="desktop">🖥️ Desktop</option>
+                            <option value="monitor">🖥️ Monitor</option>
+                            <option value="teclado">⌨️ Teclado</option>
+                            <option value="mouse">🖱️ Mouse</option>
+                            <option value="headset">🎧 Headset</option>
+                            <option value="telefono">📱 Teléfono</option>
+                            <option value="impresora">🖨️ Impresora</option>
+                            <option value="otro">📦 Otro</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Estado</label>
+                        <select id="estado" class="form-select" onchange="toggleAsignacion()">
+                            <option value="disponible">🟢 Disponible (Bodega)</option>
+                            <option value="asignado">🔵 Asignado a Empleado</option>
+                            <option value="en_reparacion">🟡 En Reparación</option>
+                            <option value="baja">🔴 Baja</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <!-- Campo de asignación de empleado -->
+                <div class="form-row" id="asignacionRow" style="display: none;">
+                    <div class="form-group" style="grid-column: 1 / -1;">
+                        <label class="form-label">Asignar a Empleado *</label>
+                        <select id="empleado_id" class="form-select">
+                            <option value="">Seleccionar empleado...</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Marca</label>
+                        <select id="marca_id" class="form-select">
+                            <option value="">Seleccionar marca...</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Modelo</label>
+                        <input type="text" id="modelo" class="form-input" placeholder="Ej: Latitude 5520">
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Número de Serie</label>
+                        <input type="text" id="numero_serie" class="form-input" placeholder="Ej: ABC123XYZ">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Fecha de Asignación</label>
+                        <input type="date" id="fecha_asignacion" class="form-input">
+                    </div>
+                </div>
+                
+                <div class="form-row single">
+                    <div class="form-group">
+                        <label class="form-label">Especificaciones</label>
+                        <textarea id="especificaciones" class="form-textarea" placeholder="Ej: Intel i5, 16GB RAM, 512GB SSD"></textarea>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Fecha de Compra</label>
+                        <input type="date" id="fecha_compra" class="form-input">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Costo</label>
+                        <input type="number" id="costo" class="form-input" placeholder="0.00" step="0.01">
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Proveedor</label>
+                        <input type="text" id="proveedor" class="form-input" placeholder="Nombre del proveedor">
+                    </div>
+                </div>
+                
+                <div class="form-row single">
+                    <div class="form-group">
+                        <label class="form-label">Notas</label>
+                        <textarea id="notas" class="form-textarea" placeholder="Observaciones adicionales..."></textarea>
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-cancel" onclick="cerrarModal()">Cancelar</button>
+            <button class="btn-save" onclick="guardarEquipo()">Guardar</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Asignar Equipo -->
+<div class="modal-overlay" id="modalAsignar">
+    <div class="modal" style="max-width: 400px;">
+        <div class="modal-header">
+            <h3>Asignar Equipo</h3>
+            <button class="modal-close" onclick="cerrarModalAsignar()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <input type="hidden" id="asignarEquipoId">
+            <p id="asignarEquipoInfo" style="margin-bottom: 16px; color: var(--text-secondary);"></p>
+            
+            <div class="form-group" style="margin-bottom: 16px;">
+                <label class="form-label">Empleado *</label>
+                <select id="asignarEmpleadoId" class="form-select" required>
+                    <option value="">Seleccionar empleado...</option>
+                </select>
+            </div>
+            
+            <div class="form-group" style="margin-bottom: 16px;">
+                <label class="form-label">Fecha de Asignación</label>
+                <input type="date" id="asignarFecha" class="form-input">
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Notas</label>
+                <textarea id="asignarNotas" class="form-textarea" placeholder="Observaciones..."></textarea>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-cancel" onclick="cerrarModalAsignar()">Cancelar</button>
+            <button class="btn-save" onclick="asignarEquipo()">Asignar</button>
+        </div>
+    </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let equipos = [];
+let empleados = [];
+let filtroActual = 'todos';
+
+// Iconos por tipo
+const iconosTipo = {
+    laptop: '💻',
+    desktop: '🖥️',
+    monitor: '🖥️',
+    teclado: '⌨️',
+    mouse: '🖱️',
+    headset: '🎧',
+    telefono: '📱',
+    impresora: '🖨️',
+    otro: '📦'
+};
+
+// Cargar datos iniciales
+document.addEventListener('DOMContentLoaded', async () => {
+    await cargarEmpleados();
+    await cargarMarcas();
+    await cargarEquipos();
+    await cargarEstadisticas();
+    
+    // Event listeners
+    document.querySelectorAll('.filter-tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+            document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+            filtroActual = tab.dataset.filter;
+            renderizarTabla();
+        });
+    });
+    
+    document.getElementById('searchInput').addEventListener('input', renderizarTabla);
+});
+
+let marcas = [];
+
+async function cargarMarcas() {
+    try {
+        const response = await fetch('/api/catalogos/marcas');
+        if (response.ok) {
+            marcas = await response.json();
+            
+            const selectMarca = document.getElementById('marca_id');
+            selectMarca.innerHTML = '<option value="">Seleccionar marca...</option>';
+            
+            marcas.forEach(marca => {
+                selectMarca.innerHTML += `<option value="${marca.id}">${marca.nombre}</option>`;
+            });
+        }
+    } catch (error) {
+        console.error('Error cargando marcas:', error);
+    }
+}
+
+async function cargarEmpleados() {
+    try {
+        const response = await fetch('/api/empleados/');
+        if (response.ok) {
+            empleados = await response.json();
+            
+            // Llenar select de asignación en modal asignar
+            const selectAsignar = document.getElementById('asignarEmpleadoId');
+            selectAsignar.innerHTML = '<option value="">Seleccionar empleado...</option>';
+            
+            // Llenar select de empleado en modal nuevo equipo
+            const selectEmpleado = document.getElementById('empleado_id');
+            selectEmpleado.innerHTML = '<option value="">Seleccionar empleado...</option>';
+            
+            empleados.forEach(emp => {
+                const option = `<option value="${emp.id}">${emp.nombre} ${emp.apellidos}</option>`;
+                selectAsignar.innerHTML += option;
+                selectEmpleado.innerHTML += option;
+            });
+        }
+    } catch (error) {
+        console.error('Error:', error);
+    }
+}
+
+// Mostrar/ocultar campo de asignación según estado
+function toggleAsignacion() {
+    const estado = document.getElementById('estado').value;
+    const asignacionRow = document.getElementById('asignacionRow');
+    
+    if (estado === 'asignado') {
+        asignacionRow.style.display = 'block';
+        document.getElementById('empleado_id').required = true;
+    } else {
+        asignacionRow.style.display = 'none';
+        document.getElementById('empleado_id').required = false;
+        document.getElementById('empleado_id').value = '';
+    }
+}
+
+async function cargarEquipos() {
+    try {
+        const response = await fetch('/api/inventario/');
+        if (response.ok) {
+            equipos = await response.json();
+            renderizarTabla();
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        mostrarToast('Error al cargar equipos', 'error');
+    }
+}
+
+async function cargarEstadisticas() {
+    try {
+        const response = await fetch('/api/inventario/estadisticas');
+        if (response.ok) {
+            const stats = await response.json();
+            document.getElementById('totalEquipos').textContent = stats.total;
+            document.getElementById('disponibles').textContent = stats.disponibles;
+            document.getElementById('asignados').textContent = stats.asignados;
+            document.getElementById('enReparacion').textContent = stats.en_reparacion;
+        }
+    } catch (error) {
+        console.error('Error:', error);
+    }
+}
+
+function renderizarTabla() {
+    const tbody = document.getElementById('equiposTableBody');
+    const busqueda = document.getElementById('searchInput').value.toLowerCase();
+    
+    let equiposFiltrados = equipos;
+    
+    // Filtrar por tipo
+    if (filtroActual !== 'todos') {
+        if (filtroActual === 'otro') {
+            equiposFiltrados = equiposFiltrados.filter(e => 
+                !['laptop', 'monitor'].includes(e.tipo)
+            );
+        } else {
+            equiposFiltrados = equiposFiltrados.filter(e => e.tipo === filtroActual);
+        }
+    }
+    
+    // Filtrar por búsqueda
+    if (busqueda) {
+        equiposFiltrados = equiposFiltrados.filter(e => 
+            (e.marca || '').toLowerCase().includes(busqueda) ||
+            (e.modelo || '').toLowerCase().includes(busqueda) ||
+            (e.numero_serie || '').toLowerCase().includes(busqueda) ||
+            (e.numero_activo || '').toLowerCase().includes(busqueda) ||
+            (e.empleado_nombre || '').toLowerCase().includes(busqueda)
+        );
+    }
+    
+    if (equiposFiltrados.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="6">
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📦</div>
+                        <p>No hay equipos registrados</p>
+                    </div>
+                </td>
+            </tr>`;
+        return;
+    }
+    
+    tbody.innerHTML = equiposFiltrados.map(eq => {
+        const icono = iconosTipo[eq.tipo] || '📦';
+        const initials = eq.empleado_nombre 
+            ? eq.empleado_nombre.split(' ').map(n => n[0]).join('').substring(0, 2)
+            : '';
+        
+        const estadoTexto = {
+            disponible: '🟢 Disponible',
+            asignado: '🔵 Asignado',
+            en_reparacion: '🟡 En Reparación',
+            baja: '🔴 Baja'
+        };
+        
+        return `
+            <tr>
+                <td>
+                    <div class="equipo-cell">
+                        <div class="equipo-icon">${icono}</div>
+                        <div class="equipo-info">
+                            <span class="equipo-name">${eq.marca || ''} ${eq.modelo || ''}</span>
+                            <span class="equipo-details">${eq.tipo}</span>
+                        </div>
+                    </div>
+                </td>
+                <td>${eq.numero_serie || '-'}</td>
+                <td>${eq.numero_activo || '-'}</td>
+                <td>
+                    ${eq.empleado_nombre ? `
+                        <div class="empleado-cell">
+                            <div class="empleado-avatar">${initials}</div>
+                            <span>${eq.empleado_nombre}</span>
+                        </div>
+                    ` : '<span style="color: var(--text-muted);">-</span>'}
+                </td>
+                <td>
+                    <span class="status-badge ${eq.estado}">${estadoTexto[eq.estado] || eq.estado}</span>
+                </td>
+                <td>
+                    <div class="actions-cell">
+                        ${eq.estado === 'disponible' ? `
+                            <button class="btn-icon assign" onclick="abrirModalAsignar('${eq.id}')" title="Asignar">
+                                👤
+                            </button>
+                        ` : ''}
+                        ${eq.estado === 'asignado' ? `
+                            <button class="btn-icon" onclick="desasignarEquipo('${eq.id}')" title="Desasignar">
+                                ↩️
+                            </button>
+                        ` : ''}
+                        <button class="btn-icon edit" onclick="editarEquipo('${eq.id}')" title="Editar">
+                            ✏️
+                        </button>
+                        <button class="btn-icon delete" onclick="eliminarEquipo('${eq.id}')" title="Eliminar">
+                            🗑️
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        `;
+    }).join('');
+}
+
+// Modal funciones
+function abrirModalNuevo() {
+    document.getElementById('modalTitle').textContent = 'Nuevo Equipo';
+    document.getElementById('formEquipo').reset();
+    document.getElementById('equipoId').value = '';
+    document.getElementById('estado').value = 'disponible';
+    document.getElementById('estado').disabled = false;
+    document.getElementById('asignacionRow').style.display = 'none';
+    document.getElementById('empleado_id').value = '';
+    document.getElementById('modalEquipo').classList.add('show');
+}
+
+function cerrarModal() {
+    document.getElementById('modalEquipo').classList.remove('show');
+}
+
+function editarEquipo(id) {
+    const equipo = equipos.find(e => e.id === id);
+    if (!equipo) return;
+    
+    document.getElementById('modalTitle').textContent = 'Editar Equipo';
+    document.getElementById('equipoId').value = equipo.id;
+    document.getElementById('tipo').value = equipo.tipo;
+    document.getElementById('estado').value = equipo.estado;
+    document.getElementById('estado').disabled = false;
+    document.getElementById('marca_id').value = equipo.marca_id || '';
+    document.getElementById('modelo').value = equipo.modelo || '';
+    document.getElementById('numero_serie').value = equipo.numero_serie || '';
+    document.getElementById('fecha_asignacion').value = equipo.fecha_asignacion || '';
+    document.getElementById('especificaciones').value = equipo.especificaciones || '';
+    document.getElementById('fecha_compra').value = equipo.fecha_compra || '';
+    document.getElementById('costo').value = equipo.costo || '';
+    document.getElementById('proveedor').value = equipo.proveedor || '';
+    document.getElementById('notas').value = equipo.notas || '';
+    
+    // Manejar asignación
+    if (equipo.estado === 'asignado' && equipo.empleado_id) {
+        document.getElementById('asignacionRow').style.display = 'block';
+        document.getElementById('empleado_id').value = equipo.empleado_id;
+    } else {
+        document.getElementById('asignacionRow').style.display = 'none';
+        document.getElementById('empleado_id').value = '';
+    }
+    toggleAsignacion();
+    
+    document.getElementById('modalEquipo').classList.add('show');
+}
+
+async function guardarEquipo() {
+    const id = document.getElementById('equipoId').value;
+    const tipo = document.getElementById('tipo').value;
+    const estado = document.getElementById('estado').value;
+    const empleadoId = document.getElementById('empleado_id').value;
+    
+    if (!tipo) {
+        mostrarToast('Selecciona un tipo de equipo', 'error');
+        return;
+    }
+    
+    // Validar que si es asignado, tenga empleado seleccionado
+    if (estado === 'asignado' && !empleadoId) {
+        mostrarToast('Selecciona un empleado para asignar el equipo', 'error');
+        return;
+    }
+    
+    const data = {
+        tipo,
+        estado,
+        empleado_id: estado === 'asignado' ? empleadoId : null,
+        marca_id: document.getElementById('marca_id').value || null,
+        modelo: document.getElementById('modelo').value || null,
+        numero_serie: document.getElementById('numero_serie').value || null,
+        fecha_asignacion: document.getElementById('fecha_asignacion').value || null,
+        especificaciones: document.getElementById('especificaciones').value || null,
+        fecha_compra: document.getElementById('fecha_compra').value || null,
+        costo: document.getElementById('costo').value ? parseFloat(document.getElementById('costo').value) : null,
+        proveedor: document.getElementById('proveedor').value || null,
+        notas: document.getElementById('notas').value || null
+    };
+    
+    // Si no es asignado, limpiar empleado_id
+    if (estado !== 'asignado') {
+        data.empleado_id = null;
+    }
+    
+    try {
+        const url = id ? `/api/inventario/${id}` : '/api/inventario/';
+        const method = id ? 'PUT' : 'POST';
+        
+        const response = await fetch(url, {
+            method,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+        
+        if (response.ok) {
+            mostrarToast(id ? 'Equipo actualizado' : 'Equipo creado', 'success');
+            cerrarModal();
+            await cargarEquipos();
+            await cargarEstadisticas();
+        } else {
+            const error = await response.json();
+            mostrarToast(error.detail || 'Error al guardar', 'error');
+        }
+    } catch (error) {
+        mostrarToast('Error de conexión', 'error');
+    }
+}
+
+async function eliminarEquipo(id) {
+    if (!confirm('¿Estás seguro de eliminar este equipo?')) return;
+    
+    try {
+        const response = await fetch(`/api/inventario/${id}`, { method: 'DELETE' });
+        
+        if (response.ok) {
+            mostrarToast('Equipo eliminado', 'success');
+            await cargarEquipos();
+            await cargarEstadisticas();
+        } else {
+            const error = await response.json();
+            mostrarToast(error.detail || 'Error al eliminar', 'error');
+        }
+    } catch (error) {
+        mostrarToast('Error de conexión', 'error');
+    }
+}
+
+// Asignación
+function abrirModalAsignar(id) {
+    const equipo = equipos.find(e => e.id === id);
+    if (!equipo) return;
+    
+    document.getElementById('asignarEquipoId').value = id;
+    document.getElementById('asignarEquipoInfo').textContent = 
+        `${equipo.marca || ''} ${equipo.modelo || ''} (${equipo.numero_serie || 'Sin serie'})`;
+    document.getElementById('asignarEmpleadoId').value = '';
+    document.getElementById('asignarFecha').value = new Date().toISOString().split('T')[0];
+    document.getElementById('asignarNotas').value = '';
+    
+    document.getElementById('modalAsignar').classList.add('show');
+}
+
+function cerrarModalAsignar() {
+    document.getElementById('modalAsignar').classList.remove('show');
+}
+
+async function asignarEquipo() {
+    const equipoId = document.getElementById('asignarEquipoId').value;
+    const empleadoId = document.getElementById('asignarEmpleadoId').value;
+    
+    if (!empleadoId) {
+        mostrarToast('Selecciona un empleado', 'error');
+        return;
+    }
+    
+    const data = {
+        empleado_id: empleadoId,
+        fecha_asignacion: document.getElementById('asignarFecha').value || null,
+        notas: document.getElementById('asignarNotas').value || null
+    };
+    
+    try {
+        const response = await fetch(`/api/inventario/${equipoId}/asignar`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+        
+        if (response.ok) {
+            mostrarToast('Equipo asignado', 'success');
+            cerrarModalAsignar();
+            await cargarEquipos();
+            await cargarEstadisticas();
+        } else {
+            const error = await response.json();
+            mostrarToast(error.detail || 'Error al asignar', 'error');
+        }
+    } catch (error) {
+        mostrarToast('Error de conexión', 'error');
+    }
+}
+
+async function desasignarEquipo(id) {
+    if (!confirm('¿Desasignar este equipo del empleado?')) return;
+    
+    try {
+        const response = await fetch(`/api/inventario/${id}/desasignar`, { method: 'POST' });
+        
+        if (response.ok) {
+            mostrarToast('Equipo desasignado', 'success');
+            await cargarEquipos();
+            await cargarEstadisticas();
+        } else {
+            const error = await response.json();
+            mostrarToast(error.detail || 'Error al desasignar', 'error');
+        }
+    } catch (error) {
+        mostrarToast('Error de conexión', 'error');
+    }
+}
+
+// Toast
+function mostrarToast(mensaje, tipo = 'success') {
+    const toast = document.getElementById('toast');
+    toast.textContent = mensaje;
+    toast.className = `toast show ${tipo}`;
+    setTimeout(() => toast.classList.remove('show'), 3000);
+}
+</script>
+{% endblock %}

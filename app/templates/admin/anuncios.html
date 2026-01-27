@@ -1,0 +1,383 @@
+{% extends "base.html" %}
+
+{% block title %}Gestión de Anuncios - Administración{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Page Header Compacto */
+    .page-header-card {
+        background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        border-radius: 12px;
+        padding: 18px 24px;
+        color: white;
+        margin-bottom: 16px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .page-header-card::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -10%;
+        width: 250px;
+        height: 250px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 50%;
+    }
+    
+    .page-header-card h1 { font-size: 20px; font-weight: 700; margin-bottom: 2px; position: relative; z-index: 1; }
+    .page-header-card p { opacity: 0.85; font-size: 13px; position: relative; z-index: 1; }
+    
+    .btn-add {
+        display: flex; align-items: center; gap: 8px; padding: 10px 20px;
+        background: rgba(255, 255, 255, 0.2); color: white;
+        border: 1px solid rgba(255, 255, 255, 0.3); border-radius: 8px;
+        font-size: 13px; font-weight: 600; cursor: pointer;
+        transition: all 0.2s; position: relative; z-index: 1;
+    }
+    .btn-add:hover { background: rgba(255, 255, 255, 0.3); transform: translateY(-1px); }
+    
+    /* Stats Row - Igual que empleados */
+    .stats-row { display: flex; gap: 16px; margin-bottom: 16px; }
+    .stat-card { background: white; border-radius: 10px; padding: 14px 20px; border: 1px solid var(--border); display: flex; align-items: center; gap: 12px; min-width: 140px; }
+    .stat-icon { width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16px; }
+    .stat-icon.total { background: rgba(245, 158, 11, 0.1); }
+    .stat-icon.active { background: rgba(16, 185, 129, 0.1); }
+    .stat-icon.urgent { background: rgba(239, 68, 68, 0.1); }
+    .stat-value { font-size: 22px; font-weight: 700; color: var(--text-primary); line-height: 1; }
+    .stat-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; }
+    
+    .anuncios-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
+    .anuncio-card { background: white; border-radius: 12px; border: 1px solid var(--border); overflow: hidden; transition: all 0.2s; }
+    .anuncio-card:hover { box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1); }
+    .anuncio-card.inactive { opacity: 0.6; }
+    .anuncio-imagen { width: 100%; height: 140px; object-fit: cover; cursor: pointer; }
+    .anuncio-body { padding: 14px; }
+    .anuncio-titulo { font-size: 14px; font-weight: 600; color: var(--text-primary); margin-bottom: 4px; }
+    .anuncio-descripcion { font-size: 12px; color: var(--text-secondary); margin-bottom: 10px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    .anuncio-meta { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+    
+    .badge { display: inline-flex; align-items: center; padding: 3px 8px; border-radius: 12px; font-size: 10px; font-weight: 500; }
+    .badge-normal { background: rgba(107, 114, 128, 0.1); color: #6b7280; }
+    .badge-importante { background: rgba(245, 158, 11, 0.1); color: #d97706; }
+    .badge-urgente { background: rgba(239, 68, 68, 0.1); color: #ef4444; }
+    .badge-activo { background: rgba(16, 185, 129, 0.1); color: #10b981; }
+    .badge-inactivo { background: rgba(107, 114, 128, 0.1); color: #6b7280; }
+    
+    .anuncio-fechas { font-size: 11px; color: var(--text-muted); margin-bottom: 10px; }
+    .anuncio-actions { display: flex; gap: 6px; }
+    .btn-action { flex: 1; padding: 6px; border-radius: 6px; border: 1px solid var(--border); background: white; cursor: pointer; font-size: 12px; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 4px; }
+    .btn-action:hover { background: var(--bg-main); }
+    .btn-action.delete:hover { background: rgba(239, 68, 68, 0.1); border-color: #ef4444; color: #ef4444; }
+    
+    .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.5); display: none; align-items: center; justify-content: center; z-index: 1000; padding: 20px; }
+    .modal-overlay.show { display: flex; }
+    .modal { background: white; border-radius: 14px; width: 100%; max-width: 550px; max-height: 90vh; overflow-y: auto; }
+    .modal-header { padding: 16px 20px; background: linear-gradient(135deg, #f59e0b, #d97706); color: white; display: flex; align-items: center; justify-content: space-between; }
+    .modal-header h3 { font-size: 16px; font-weight: 600; }
+    .modal-close { background: none; border: none; color: white; font-size: 24px; cursor: pointer; opacity: 0.8; }
+    .modal-close:hover { opacity: 1; }
+    .modal-body { padding: 24px; }
+    .modal-footer { padding: 16px 24px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 12px; }
+    
+    .upload-zone { border: 2px dashed var(--border); border-radius: 12px; padding: 40px 20px; text-align: center; cursor: pointer; transition: all 0.2s; margin-bottom: 20px; background: var(--bg-main); }
+    .upload-zone:hover, .upload-zone.dragover { border-color: #f59e0b; background: rgba(245, 158, 11, 0.05); }
+    .upload-zone-icon { font-size: 48px; margin-bottom: 12px; }
+    .upload-zone-text { font-size: 15px; color: var(--text-primary); margin-bottom: 4px; }
+    .upload-zone-hint { font-size: 13px; color: var(--text-muted); }
+    .upload-zone input { display: none; }
+    
+    .image-preview { position: relative; margin-bottom: 20px; display: none; }
+    .image-preview.show { display: block; }
+    .image-preview img { width: 100%; height: 200px; object-fit: cover; border-radius: 12px; }
+    .image-preview-remove { position: absolute; top: 10px; right: 10px; width: 32px; height: 32px; border-radius: 50%; background: rgba(239, 68, 68, 0.9); color: white; border: none; cursor: pointer; font-size: 18px; display: flex; align-items: center; justify-content: center; }
+    
+    .form-group { margin-bottom: 16px; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .form-label { display: block; font-size: 13px; font-weight: 600; color: var(--text-primary); margin-bottom: 6px; }
+    .form-input, .form-select, .form-textarea { width: 100%; padding: 10px 14px; border: 1px solid var(--border); border-radius: 8px; font-size: 14px; font-family: inherit; transition: all 0.2s; box-sizing: border-box; }
+    .form-input:focus, .form-select:focus, .form-textarea:focus { outline: none; border-color: #f59e0b; box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.1); }
+    .form-textarea { resize: vertical; min-height: 80px; }
+    
+    .btn-cancel { padding: 10px 20px; background: var(--bg-main); color: var(--text-secondary); border: 1px solid var(--border); border-radius: 8px; font-size: 14px; font-weight: 500; cursor: pointer; }
+    .btn-save { padding: 10px 24px; background: linear-gradient(135deg, #f59e0b, #d97706); color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; }
+    .btn-save:hover { box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3); }
+    .btn-save:disabled { opacity: 0.6; cursor: not-allowed; }
+    
+    .upload-loading { display: none; align-items: center; justify-content: center; gap: 10px; padding: 20px; color: var(--text-secondary); }
+    .upload-loading.show { display: flex; }
+    .spinner { width: 24px; height: 24px; border: 3px solid var(--border); border-top-color: #f59e0b; border-radius: 50%; animation: spin 0.8s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    
+    .empty-state { text-align: center; padding: 40px 20px; background: white; border-radius: 12px; border: 1px solid var(--border); }
+    .empty-state-icon { font-size: 48px; margin-bottom: 12px; opacity: 0.5; }
+    .empty-state-title { font-size: 16px; font-weight: 600; color: var(--text-primary); margin-bottom: 6px; }
+    .empty-state-text { color: var(--text-muted); margin-bottom: 16px; font-size: 13px; }
+    
+    .toast { position: fixed; bottom: 20px; right: 20px; padding: 14px 20px; border-radius: 8px; color: white; font-weight: 500; z-index: 2000; display: none; animation: slideIn 0.3s ease; font-size: 13px; }
+    .toast.show { display: block; }
+    .toast.success { background: #10b981; }
+    .toast.error { background: #ef4444; }
+    @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+    
+    .modal-imagen { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.9); display: none; align-items: center; justify-content: center; z-index: 2000; padding: 20px; }
+    .modal-imagen.show { display: flex; }
+    .modal-imagen img { max-width: 90%; max-height: 90%; object-fit: contain; border-radius: 8px; }
+    .modal-imagen-close { position: absolute; top: 20px; right: 30px; color: white; font-size: 36px; cursor: pointer; }
+    
+    @media (max-width: 768px) {
+        .page-header-card { flex-direction: column; gap: 16px; text-align: center; }
+        .stats-row { flex-wrap: wrap; }
+        .anuncios-grid { grid-template-columns: 1fr; }
+        .form-row { grid-template-columns: 1fr; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header-card">
+    <div>
+        <h1>📢 Gestión de Anuncios</h1>
+        <p>Publica avisos e imágenes para los empleados</p>
+    </div>
+    <button class="btn-add" onclick="abrirModalNuevo()">
+        <span>➕</span> Nuevo Anuncio
+    </button>
+</div>
+
+<div class="stats-row">
+    <div class="stat-card">
+        <div class="stat-icon total">📋</div>
+        <div><div class="stat-value" id="totalAnuncios">0</div><div class="stat-label">Total</div></div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon active">✅</div>
+        <div><div class="stat-value" id="anunciosActivos">0</div><div class="stat-label">Activos</div></div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon urgent">🔴</div>
+        <div><div class="stat-value" id="anunciosUrgentes">0</div><div class="stat-label">Urgentes</div></div>
+    </div>
+</div>
+
+<div class="anuncios-grid" id="anunciosGrid"></div>
+<div class="empty-state" id="emptyState" style="display: none;">
+    <div class="empty-state-icon">📢</div>
+    <h3 class="empty-state-title">No hay anuncios</h3>
+    <p class="empty-state-text">Crea tu primer anuncio para comunicarte con los empleados</p>
+    <button class="btn-save" onclick="abrirModalNuevo()">➕ Crear Anuncio</button>
+</div>
+
+<div class="modal-overlay" id="modalAnuncio">
+    <div class="modal">
+        <div class="modal-header">
+            <h3 id="modalTitle">Nuevo Anuncio</h3>
+            <button class="modal-close" onclick="cerrarModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <form id="formAnuncio">
+                <input type="hidden" id="anuncioId">
+                <input type="hidden" id="imagenUrl">
+                
+                <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fileInput').click()">
+                    <div class="upload-zone-icon">📷</div>
+                    <div class="upload-zone-text">Arrastra una imagen aquí o haz clic para seleccionar</div>
+                    <div class="upload-zone-hint">JPG, PNG, GIF o WebP • Máximo 5MB</div>
+                    <input type="file" id="fileInput" accept="image/*">
+                </div>
+                
+                <div class="upload-loading" id="uploadLoading"><div class="spinner"></div><span>Subiendo imagen...</span></div>
+                <div class="image-preview" id="imagePreview"><img id="previewImg" src="" alt="Preview"><button type="button" class="image-preview-remove" onclick="eliminarImagen()">×</button></div>
+                
+                <div class="form-group"><label class="form-label">Título (opcional)</label><input type="text" id="titulo" class="form-input" placeholder="Ej: Aviso importante"></div>
+                <div class="form-group"><label class="form-label">Descripción (opcional)</label><textarea id="descripcion" class="form-textarea" placeholder="Descripción breve del anuncio..."></textarea></div>
+                <div class="form-row">
+                    <div class="form-group"><label class="form-label">Fecha inicio</label><input type="date" id="fechaInicio" class="form-input"></div>
+                    <div class="form-group"><label class="form-label">Fecha fin (opcional)</label><input type="date" id="fechaFin" class="form-input"></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label class="form-label">Prioridad</label><select id="prioridad" class="form-select"><option value="normal">Normal</option><option value="importante">Importante</option><option value="urgente">Urgente</option></select></div>
+                    <div class="form-group"><label class="form-label">Orden</label><input type="number" id="orden" class="form-input" value="0" min="0"></div>
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-cancel" onclick="cerrarModal()">Cancelar</button>
+            <button class="btn-save" onclick="guardarAnuncio()" id="btnGuardar">Publicar</button>
+        </div>
+    </div>
+</div>
+
+<div class="modal-imagen" id="modalImagen" onclick="cerrarModalImagen()">
+    <span class="modal-imagen-close">&times;</span>
+    <img id="imagenGrande" src="" alt="Anuncio">
+</div>
+
+<div class="toast" id="toast"></div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let anuncios = [];
+let modoEdicion = false;
+
+document.addEventListener('DOMContentLoaded', () => {
+    cargarAnuncios();
+    setupDragDrop();
+    document.getElementById('fechaInicio').value = new Date().toISOString().split('T')[0];
+});
+
+async function cargarAnuncios() {
+    try {
+        const response = await fetch('/api/anuncios/');
+        if (response.ok) { anuncios = await response.json(); renderizarAnuncios(); actualizarStats(); }
+    } catch (error) { mostrarToast('Error al cargar anuncios', 'error'); }
+}
+
+function actualizarStats() {
+    document.getElementById('totalAnuncios').textContent = anuncios.length;
+    document.getElementById('anunciosActivos').textContent = anuncios.filter(a => a.activo).length;
+    document.getElementById('anunciosUrgentes').textContent = anuncios.filter(a => a.prioridad === 'urgente').length;
+}
+
+function renderizarAnuncios() {
+    const grid = document.getElementById('anunciosGrid');
+    const empty = document.getElementById('emptyState');
+    if (anuncios.length === 0) { grid.style.display = 'none'; empty.style.display = 'block'; return; }
+    grid.style.display = 'grid'; empty.style.display = 'none';
+    grid.innerHTML = anuncios.map(a => `
+        <div class="anuncio-card ${a.activo ? '' : 'inactive'}">
+            <img src="${a.imagen_url}" alt="${a.titulo || 'Anuncio'}" class="anuncio-imagen" onclick="verImagenGrande('${a.imagen_url}')">
+            <div class="anuncio-body">
+                <h4 class="anuncio-titulo">${a.titulo || 'Sin título'}</h4>
+                ${a.descripcion ? `<p class="anuncio-descripcion">${a.descripcion}</p>` : ''}
+                <div class="anuncio-meta">
+                    <span class="badge badge-${a.prioridad}">${a.prioridad}</span>
+                    <span class="badge ${a.activo ? 'badge-activo' : 'badge-inactivo'}">${a.activo ? '✅ Activo' : '⏸️ Inactivo'}</span>
+                </div>
+                <div class="anuncio-fechas">📅 ${formatearFecha(a.fecha_inicio)} ${a.fecha_fin ? '→ ' + formatearFecha(a.fecha_fin) : ''}</div>
+                <div class="anuncio-actions">
+                    <button class="btn-action" onclick="toggleActivo('${a.id}')">${a.activo ? '⏸️' : '▶️'}</button>
+                    <button class="btn-action" onclick="editarAnuncio('${a.id}')">✏️</button>
+                    <button class="btn-action delete" onclick="eliminarAnuncio('${a.id}')">🗑️</button>
+                </div>
+            </div>
+        </div>
+    `).join('');
+}
+
+function formatearFecha(fecha) { if (!fecha) return ''; return new Date(fecha + 'T00:00:00').toLocaleDateString('es-MX', { day: '2-digit', month: 'short' }); }
+
+function setupDragDrop() {
+    const zone = document.getElementById('uploadZone');
+    const input = document.getElementById('fileInput');
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(e => zone.addEventListener(e, ev => { ev.preventDefault(); ev.stopPropagation(); }));
+    ['dragenter', 'dragover'].forEach(e => zone.addEventListener(e, () => zone.classList.add('dragover')));
+    ['dragleave', 'drop'].forEach(e => zone.addEventListener(e, () => zone.classList.remove('dragover')));
+    zone.addEventListener('drop', e => { if (e.dataTransfer.files.length > 0) subirImagen(e.dataTransfer.files[0]); });
+    input.addEventListener('change', e => { if (e.target.files.length > 0) subirImagen(e.target.files[0]); });
+}
+
+async function subirImagen(file) {
+    if (!file.type.startsWith('image/')) { mostrarToast('Solo se permiten imágenes', 'error'); return; }
+    if (file.size > 5 * 1024 * 1024) { mostrarToast('La imagen es muy grande (máx 5MB)', 'error'); return; }
+    const zone = document.getElementById('uploadZone'), loading = document.getElementById('uploadLoading'), preview = document.getElementById('imagePreview');
+    zone.style.display = 'none'; loading.classList.add('show');
+    const formData = new FormData(); formData.append('file', file);
+    try {
+        const response = await fetch('/api/anuncios/upload-imagen', { method: 'POST', body: formData });
+        if (response.ok) {
+            const data = await response.json();
+            document.getElementById('imagenUrl').value = data.url;
+            document.getElementById('previewImg').src = data.url;
+            preview.classList.add('show');
+            mostrarToast('Imagen subida', 'success');
+        } else { const error = await response.json(); mostrarToast(error.detail || 'Error al subir imagen', 'error'); zone.style.display = 'block'; }
+    } catch (error) { mostrarToast('Error de conexión', 'error'); zone.style.display = 'block'; }
+    finally { loading.classList.remove('show'); }
+}
+
+function eliminarImagen() {
+    document.getElementById('imagenUrl').value = '';
+    document.getElementById('previewImg').src = '';
+    document.getElementById('imagePreview').classList.remove('show');
+    document.getElementById('uploadZone').style.display = 'block';
+    document.getElementById('fileInput').value = '';
+}
+
+function abrirModalNuevo() {
+    modoEdicion = false;
+    document.getElementById('modalTitle').textContent = 'Nuevo Anuncio';
+    document.getElementById('formAnuncio').reset();
+    document.getElementById('anuncioId').value = '';
+    document.getElementById('fechaInicio').value = new Date().toISOString().split('T')[0];
+    eliminarImagen();
+    document.getElementById('modalAnuncio').classList.add('show');
+}
+
+function editarAnuncio(id) {
+    const a = anuncios.find(x => x.id === id); if (!a) return;
+    modoEdicion = true;
+    document.getElementById('modalTitle').textContent = 'Editar Anuncio';
+    document.getElementById('anuncioId').value = a.id;
+    document.getElementById('titulo').value = a.titulo || '';
+    document.getElementById('descripcion').value = a.descripcion || '';
+    document.getElementById('fechaInicio').value = a.fecha_inicio || '';
+    document.getElementById('fechaFin').value = a.fecha_fin || '';
+    document.getElementById('prioridad').value = a.prioridad || 'normal';
+    document.getElementById('orden').value = a.orden || 0;
+    document.getElementById('imagenUrl').value = a.imagen_url;
+    document.getElementById('previewImg').src = a.imagen_url;
+    document.getElementById('imagePreview').classList.add('show');
+    document.getElementById('uploadZone').style.display = 'none';
+    document.getElementById('modalAnuncio').classList.add('show');
+}
+
+function cerrarModal() { document.getElementById('modalAnuncio').classList.remove('show'); }
+
+async function guardarAnuncio() {
+    const imagenUrl = document.getElementById('imagenUrl').value;
+    if (!imagenUrl) { mostrarToast('Debes subir una imagen', 'error'); return; }
+    const id = document.getElementById('anuncioId').value;
+    const btn = document.getElementById('btnGuardar');
+    btn.disabled = true; btn.textContent = 'Guardando...';
+    const data = {
+        imagen_url: imagenUrl,
+        titulo: document.getElementById('titulo').value || null,
+        descripcion: document.getElementById('descripcion').value || null,
+        fecha_inicio: document.getElementById('fechaInicio').value || null,
+        fecha_fin: document.getElementById('fechaFin').value || null,
+        prioridad: document.getElementById('prioridad').value,
+        orden: parseInt(document.getElementById('orden').value) || 0
+    };
+    try {
+        const response = modoEdicion 
+            ? await fetch(`/api/anuncios/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) })
+            : await fetch('/api/anuncios/', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+        if (response.ok) { mostrarToast(modoEdicion ? 'Anuncio actualizado' : 'Anuncio publicado', 'success'); cerrarModal(); await cargarAnuncios(); }
+        else { const error = await response.json(); mostrarToast(error.detail || 'Error al guardar', 'error'); }
+    } catch (error) { mostrarToast('Error de conexión', 'error'); }
+    finally { btn.disabled = false; btn.textContent = 'Publicar'; }
+}
+
+async function toggleActivo(id) {
+    try { const r = await fetch(`/api/anuncios/${id}/toggle-activo`, { method: 'POST' }); if (r.ok) await cargarAnuncios(); }
+    catch (error) { mostrarToast('Error al cambiar estado', 'error'); }
+}
+
+async function eliminarAnuncio(id) {
+    if (!confirm('¿Eliminar este anuncio?')) return;
+    try { const r = await fetch(`/api/anuncios/${id}`, { method: 'DELETE' }); if (r.ok) { mostrarToast('Anuncio eliminado', 'success'); await cargarAnuncios(); } else mostrarToast('Error al eliminar', 'error'); }
+    catch (error) { mostrarToast('Error de conexión', 'error'); }
+}
+
+function verImagenGrande(url) { document.getElementById('imagenGrande').src = url; document.getElementById('modalImagen').classList.add('show'); }
+function cerrarModalImagen() { document.getElementById('modalImagen').classList.remove('show'); }
+function mostrarToast(msg, tipo = 'success') { const t = document.getElementById('toast'); t.textContent = msg; t.className = `toast show ${tipo}`; setTimeout(() => t.classList.remove('show'), 3000); }
+document.addEventListener('keydown', e => { if (e.key === 'Escape') { cerrarModal(); cerrarModalImagen(); } });
+</script>
+{% endblock %}

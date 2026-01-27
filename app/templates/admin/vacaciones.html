@@ -1,0 +1,366 @@
+{% extends "base.html" %}
+
+{% block title %}Gestión de Vacaciones - Administración{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Page Header Compacto - Homologado */
+    .page-header-card {
+        background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+        border-radius: 12px;
+        padding: 18px 24px;
+        color: white;
+        margin-bottom: 16px;
+        position: relative;
+        overflow: hidden;
+    }
+    .page-header-card::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -10%;
+        width: 300px;
+        height: 300px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 50%;
+    }
+    .page-header-card h1 { font-size: 20px; font-weight: 700; margin-bottom: 2px; position: relative; z-index: 1; }
+    .page-header-card p { opacity: 0.85; font-size: 13px; position: relative; z-index: 1; }
+    
+    .filter-tabs {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 16px;
+        flex-wrap: wrap;
+    }
+    
+    .tab-btn {
+        padding: 8px 18px;
+        border: none;
+        background: white;
+        border-radius: 8px;
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--text-secondary);
+        cursor: pointer;
+        transition: all 0.2s;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+        border: 1px solid var(--border);
+    }
+    
+    .tab-btn:hover {
+        background: #e0f2fe;
+        color: #0284c7;
+        border-color: #7dd3fc;
+        transform: translateY(-1px);
+    }
+    
+    .tab-btn.active {
+        background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+        color: white;
+        border-color: transparent;
+        box-shadow: 0 4px 12px rgba(14, 165, 233, 0.3);
+    }
+    
+    .vacaciones-card {
+        background: white;
+        border-radius: 12px;
+        border: 1px solid var(--border);
+        overflow: hidden;
+    }
+    
+    .vacaciones-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    
+    .vacaciones-table th {
+        background: #f8fafc;
+        padding: 10px 16px;
+        text-align: left;
+        font-size: 10px;
+        font-weight: 600;
+        color: var(--text-secondary);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .vacaciones-table td {
+        padding: 10px 16px;
+        border-top: 1px solid var(--border);
+        font-size: 12px;
+        color: var(--text-primary);
+        vertical-align: middle;
+    }
+    
+    .vacaciones-table tr:hover {
+        background: #f8fafc;
+    }
+    
+    .empleado-info {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .empleado-avatar {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        background: linear-gradient(135deg, #0ea5e9, #0284c7);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        font-size: 11px;
+    }
+    
+    .empleado-nombre {
+        font-weight: 600;
+        color: var(--text-primary);
+        font-size: 12px;
+    }
+    
+    .fecha-rango {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+    }
+    
+    .fecha-rango span {
+        font-size: 11px;
+    }
+    
+    .dias-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background: #e0f2fe;
+        color: #0284c7;
+        padding: 3px 10px;
+        border-radius: 20px;
+        font-weight: 600;
+        font-size: 13px;
+    }
+    
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 14px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+    }
+    
+    .status-pendiente {
+        background: #fef3c7;
+        color: #d97706;
+    }
+    
+    .status-aprobada {
+        background: #d1fae5;
+        color: #059669;
+    }
+    
+    .status-rechazada {
+        background: #fee2e2;
+        color: #dc2626;
+    }
+    
+    .actions-cell {
+        display: flex;
+        gap: 8px;
+    }
+    
+    .btn-aprobar, .btn-rechazar {
+        padding: 8px 16px;
+        border-radius: 8px;
+        font-size: 13px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+        border: none;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+    
+    .btn-aprobar {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        color: white;
+    }
+    
+    .btn-aprobar:hover {
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+        transform: translateY(-1px);
+    }
+    
+    .btn-rechazar {
+        background: white;
+        color: #ef4444;
+        border: 1px solid #fecaca;
+    }
+    
+    .btn-rechazar:hover {
+        background: #fef2f2;
+        border-color: #f87171;
+    }
+    
+    .empty-state {
+        padding: 60px 20px;
+        text-align: center;
+        color: var(--text-muted);
+    }
+    
+    .empty-state-icon {
+        font-size: 48px;
+        margin-bottom: 16px;
+        opacity: 0.5;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header-card">
+    <h1>🏖️ Gestión de Vacaciones</h1>
+    <p>Aprobar o rechazar solicitudes</p>
+</div>
+
+<!-- Filtros -->
+<div class="filter-tabs">
+    <button class="tab-btn active" onclick="filtrar('pendiente', this)">⏳ Pendientes</button>
+    <button class="tab-btn" onclick="filtrar('aprobada', this)">✅ Aprobadas</button>
+    <button class="tab-btn" onclick="filtrar('rechazada', this)">❌ Rechazadas</button>
+    <button class="tab-btn" onclick="filtrar('todas', this)">📋 Todas</button>
+</div>
+
+<!-- Lista de solicitudes -->
+<div class="vacaciones-card">
+    <div id="solicitudesLista">
+        <p class="empty-state">Cargando solicitudes...</p>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let filtroActual = 'pendiente';
+
+async function cargarSolicitudes() {
+    const container = document.getElementById('solicitudesLista');
+    container.innerHTML = '<p class="empty-state">Cargando...</p>';
+    
+    try {
+        let url = '/api/vacaciones/todas';
+        if (filtroActual !== 'todas') {
+            url += `?estatus=${filtroActual}`;
+        }
+        
+        const response = await fetch(url);
+        if (response.ok) {
+            const solicitudes = await response.json();
+            
+            if (solicitudes.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">🏖️</div>
+                        <p>No hay solicitudes ${filtroActual !== 'todas' ? filtroActual + 's' : ''}</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            let html = `
+                <table class="vacaciones-table">
+                    <thead>
+                        <tr>
+                            <th>Empleado</th>
+                            <th>Fechas</th>
+                            <th>Días</th>
+                            <th>Motivo</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+            
+            solicitudes.forEach(sol => {
+                const nombre = sol.empleado ? sol.empleado.nombre : '';
+                const apellidos = sol.empleado ? sol.empleado.apellidos : '';
+                const initials = (nombre[0] || '') + (apellidos[0] || '');
+                
+                const statusIcons = { 'pendiente': '⏳', 'aprobada': '✅', 'rechazada': '❌' };
+                
+                html += `
+                    <tr>
+                        <td>
+                            <div class="empleado-info">
+                                <div class="empleado-avatar">${initials}</div>
+                                <span class="empleado-nombre">${nombre} ${apellidos}</span>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="fecha-rango">
+                                <span>📅 ${sol.fecha_inicio}</span>
+                                <span>➜ ${sol.fecha_fin}</span>
+                            </div>
+                        </td>
+                        <td><span class="dias-badge">${sol.dias_solicitados} días</span></td>
+                        <td>${sol.motivo || '-'}</td>
+                        <td><span class="status-badge status-${sol.estatus}">${statusIcons[sol.estatus]} ${sol.estatus}</span></td>
+                        <td>
+                            ${sol.estatus === 'pendiente' ? `
+                                <div class="actions-cell">
+                                    <button class="btn-aprobar" onclick="aprobar('${sol.id}')">✓ Aprobar</button>
+                                    <button class="btn-rechazar" onclick="rechazar('${sol.id}')">✗ Rechazar</button>
+                                </div>
+                            ` : '<span style="color:var(--text-muted)">-</span>'}
+                        </td>
+                    </tr>
+                `;
+            });
+            
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
+    } catch (error) {
+        container.innerHTML = '<p class="empty-state">Error al cargar las solicitudes</p>';
+    }
+}
+
+function filtrar(estatus, btn) {
+    filtroActual = estatus;
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    cargarSolicitudes();
+}
+
+async function aprobar(id) {
+    if (!confirm('¿Aprobar esta solicitud de vacaciones?')) return;
+    
+    const response = await fetch(`/api/vacaciones/${id}/aprobar`, { method: 'PATCH' });
+    if (response.ok) {
+        cargarSolicitudes();
+    } else {
+        alert('Error al aprobar');
+    }
+}
+
+async function rechazar(id) {
+    const comentario = prompt('Motivo del rechazo:');
+    if (!comentario) return;
+    
+    const response = await fetch(`/api/vacaciones/${id}/rechazar?comentario=${encodeURIComponent(comentario)}`, { method: 'PATCH' });
+    if (response.ok) {
+        cargarSolicitudes();
+    } else {
+        alert('Error al rechazar');
+    }
+}
+
+document.addEventListener('DOMContentLoaded', cargarSolicitudes);
+</script>
+{% endblock %}

@@ -1,0 +1,402 @@
+{% extends "base.html" %}
+
+{% block title %}Mis Recibos de Nómina{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Header */
+    .page-header {
+        background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+        border-radius: 12px;
+        padding: 18px 24px;
+        color: white;
+        margin-bottom: 20px;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .page-header::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -10%;
+        width: 200px;
+        height: 200px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 50%;
+    }
+    
+    .page-header h1 {
+        font-size: 22px;
+        font-weight: 700;
+        margin-bottom: 4px;
+        position: relative;
+        z-index: 1;
+    }
+    
+    .page-header p {
+        font-size: 14px;
+        opacity: 0.9;
+        position: relative;
+        z-index: 1;
+    }
+    
+    /* Filtros */
+    .filters-section {
+        background: white;
+        border-radius: 12px;
+        padding: 16px 20px;
+        margin-bottom: 20px;
+        border: 1px solid var(--border);
+        display: flex;
+        gap: 16px;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+    
+    .filter-group {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .filter-group label {
+        font-size: 13px;
+        color: var(--text-secondary);
+        font-weight: 500;
+    }
+    
+    .filter-group select {
+        padding: 8px 12px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        font-size: 13px;
+        background: white;
+        min-width: 120px;
+    }
+    
+    /* Grid de recibos */
+    .recibos-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 16px;
+    }
+    
+    .recibo-card {
+        background: white;
+        border-radius: 12px;
+        border: 1px solid var(--border);
+        overflow: hidden;
+        transition: all 0.2s;
+    }
+    
+    .recibo-card:hover {
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+        transform: translateY(-2px);
+    }
+    
+    .recibo-header {
+        background: linear-gradient(135deg, #059669, #10b981);
+        padding: 16px;
+        color: white;
+    }
+    
+    .recibo-periodo {
+        font-size: 11px;
+        text-transform: uppercase;
+        opacity: 0.9;
+        letter-spacing: 0.5px;
+        margin-bottom: 4px;
+    }
+    
+    .recibo-fecha {
+        font-size: 18px;
+        font-weight: 700;
+    }
+    
+    .recibo-body {
+        padding: 16px;
+    }
+    
+    .recibo-info {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: var(--text-secondary);
+        font-size: 12px;
+        margin-bottom: 12px;
+    }
+    
+    .recibo-info svg {
+        width: 14px;
+        height: 14px;
+    }
+    
+    .btn-descargar {
+        width: 100%;
+        padding: 10px;
+        background: linear-gradient(135deg, #059669, #10b981);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        transition: all 0.2s;
+    }
+    
+    .btn-descargar:hover {
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+    }
+    
+    /* Empty state */
+    .empty-state {
+        background: white;
+        border-radius: 12px;
+        border: 1px solid var(--border);
+        padding: 60px 40px;
+        text-align: center;
+    }
+    
+    .empty-state-icon {
+        font-size: 64px;
+        margin-bottom: 16px;
+    }
+    
+    .empty-state h3 {
+        font-size: 18px;
+        color: var(--text-primary);
+        margin-bottom: 8px;
+    }
+    
+    .empty-state p {
+        font-size: 14px;
+        color: var(--text-muted);
+    }
+    
+    /* Stats */
+    .stats-row {
+        display: flex;
+        gap: 16px;
+        margin-bottom: 20px;
+    }
+    
+    .stat-card {
+        background: white;
+        border-radius: 10px;
+        padding: 16px 20px;
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        border: 1px solid var(--border);
+        flex: 1;
+    }
+    
+    .stat-icon {
+        width: 44px;
+        height: 44px;
+        border-radius: 10px;
+        background: rgba(16, 185, 129, 0.1);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+    }
+    
+    .stat-value {
+        font-size: 24px;
+        font-weight: 700;
+        color: var(--text-primary);
+    }
+    
+    .stat-label {
+        font-size: 12px;
+        color: var(--text-muted);
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+        .stats-row {
+            flex-direction: column;
+        }
+        
+        .filters-section {
+            flex-direction: column;
+            align-items: stretch;
+        }
+        
+        .recibos-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<div class="page-header">
+    <h1>💰 Mis Recibos de Nómina</h1>
+    <p>Consulta y descarga tus recibos de nómina</p>
+</div>
+
+<!-- Stats -->
+<div class="stats-row">
+    <div class="stat-card">
+        <div class="stat-icon">📄</div>
+        <div>
+            <div class="stat-value" id="totalRecibos">0</div>
+            <div class="stat-label">Total de recibos</div>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon">📅</div>
+        <div>
+            <div class="stat-value" id="recibosAnio">0</div>
+            <div class="stat-label">Recibos este año</div>
+        </div>
+    </div>
+</div>
+
+<!-- Filtros -->
+<div class="filters-section">
+    <div class="filter-group">
+        <label>Año:</label>
+        <select id="filtroAnio" onchange="cargarRecibos()">
+        </select>
+    </div>
+</div>
+
+<!-- Grid de Recibos -->
+<div class="recibos-grid" id="recibosGrid">
+    <!-- Se cargan dinámicamente -->
+</div>
+
+<!-- Empty State -->
+<div class="empty-state" id="emptyState" style="display: none;">
+    <div class="empty-state-icon">📭</div>
+    <h3>No tienes recibos aún</h3>
+    <p>Cuando tu empresa suba tus recibos de nómina, aparecerán aquí.</p>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let recibos = [];
+
+document.addEventListener('DOMContentLoaded', () => {
+    inicializarAnios();
+    cargarRecibos();
+});
+
+function inicializarAnios() {
+    const anioActual = new Date().getFullYear();
+    const filtroAnio = document.getElementById('filtroAnio');
+    
+    filtroAnio.innerHTML = '<option value="">Todos los años</option>';
+    for (let a = anioActual; a >= anioActual - 5; a--) {
+        filtroAnio.innerHTML += `<option value="${a}" ${a === anioActual ? 'selected' : ''}>${a}</option>`;
+    }
+}
+
+async function cargarRecibos() {
+    const anio = document.getElementById('filtroAnio').value;
+    
+    let url = '/api/recibos/mis-recibos';
+    if (anio) url += `?anio=${anio}`;
+    
+    try {
+        const response = await fetch(url);
+        if (response.ok) {
+            recibos = await response.json();
+            renderizarRecibos();
+            actualizarEstadisticas();
+        }
+    } catch (error) {
+        console.error('Error:', error);
+    }
+}
+
+function renderizarRecibos() {
+    const grid = document.getElementById('recibosGrid');
+    const emptyState = document.getElementById('emptyState');
+    
+    if (recibos.length === 0) {
+        grid.style.display = 'none';
+        emptyState.style.display = 'block';
+        return;
+    }
+    
+    grid.style.display = 'grid';
+    emptyState.style.display = 'none';
+    
+    grid.innerHTML = recibos.map(recibo => {
+        const fechaSubida = recibo.fecha_subida ? 
+            new Date(recibo.fecha_subida).toLocaleDateString('es-MX', { 
+                day: 'numeric', 
+                month: 'short', 
+                year: 'numeric' 
+            }) : '-';
+        
+        return `
+            <div class="recibo-card">
+                <div class="recibo-header">
+                    <div class="recibo-periodo">${recibo.periodo}</div>
+                    <div class="recibo-fecha">${recibo.mes_nombre || 'Mes ' + recibo.mes} ${recibo.anio}</div>
+                </div>
+                <div class="recibo-body">
+                    <div class="recibo-info">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                            <line x1="16" y1="2" x2="16" y2="6"></line>
+                            <line x1="8" y1="2" x2="8" y2="6"></line>
+                            <line x1="3" y1="10" x2="21" y2="10"></line>
+                        </svg>
+                        Subido el ${fechaSubida}
+                    </div>
+                    <button class="btn-descargar" onclick="descargarRecibo(${recibo.id})">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="7 10 12 15 17 10"></polyline>
+                            <line x1="12" y1="15" x2="12" y2="3"></line>
+                        </svg>
+                        Descargar PDF
+                    </button>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+function actualizarEstadisticas() {
+    const anioActual = new Date().getFullYear();
+    const totalRecibos = recibos.length;
+    const recibosAnio = recibos.filter(r => r.anio === anioActual).length;
+    
+    // Si hay filtro de año, mostrar el total filtrado
+    const filtroAnio = document.getElementById('filtroAnio').value;
+    
+    document.getElementById('totalRecibos').textContent = totalRecibos;
+    document.getElementById('recibosAnio').textContent = filtroAnio ? totalRecibos : recibosAnio;
+}
+
+async function descargarRecibo(id) {
+    try {
+        const response = await fetch(`/api/recibos/descargar/${id}`);
+        if (response.ok) {
+            const data = await response.json();
+            window.open(data.url, '_blank');
+        } else {
+            alert('Error al obtener el recibo');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Error de conexión');
+    }
+}
+</script>
+{% endblock %}

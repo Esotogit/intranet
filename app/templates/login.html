@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Iniciar Sesión - Intranet</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #1e3a5f 0%, #2d4a6f 50%, #0093b0 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            position: relative;
+        }
+        
+        /* Efecto de fondo sutil */
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+            pointer-events: none;
+        }
+        
+        .login-wrapper {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            max-width: 900px;
+            gap: 60px;
+            position: relative;
+            z-index: 1;
+        }
+        
+        /* Lado izquierdo - Logo */
+        .brand-side {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            color: white;
+        }
+        
+        .logo-container {
+            width: 200px;
+            height: 200px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 24px;
+        }
+        
+        .logo-container img {
+            max-width: 180px;
+            max-height: 180px;
+            object-fit: contain;
+        }
+        
+        .logo-placeholder {
+            font-size: 64px;
+            opacity: 0.8;
+        }
+        
+        .brand-name {
+            font-size: 42px;
+            font-weight: 700;
+            letter-spacing: -1px;
+            margin-bottom: 8px;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        }
+        
+        .brand-tagline {
+            font-size: 16px;
+            opacity: 0.85;
+            font-weight: 400;
+        }
+        
+        /* Divisor vertical */
+        .divider {
+            width: 1px;
+            height: 300px;
+            background: linear-gradient(to bottom, transparent, rgba(255,255,255,0.3), transparent);
+        }
+        
+        /* Lado derecho - Formulario */
+        .form-side {
+            flex: 1;
+            max-width: 350px;
+        }
+        
+        .form-title {
+            color: white;
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 28px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-input {
+            width: 100%;
+            padding: 14px 18px;
+            border: none;
+            border-radius: 6px;
+            font-size: 15px;
+            font-family: inherit;
+            background: rgba(255, 255, 255, 0.95);
+            color: #333;
+            transition: all 0.2s;
+        }
+        
+        .form-input::placeholder {
+            color: #999;
+            font-style: italic;
+        }
+        
+        .form-input:focus {
+            outline: none;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(0, 147, 176, 0.3);
+        }
+        
+        .form-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-top: 24px;
+        }
+        
+        .forgot-link {
+            color: rgba(255, 255, 255, 0.85);
+            font-size: 14px;
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+        
+        .forgot-link:hover {
+            color: white;
+            text-decoration: underline;
+        }
+        
+        .btn-go {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: transparent;
+            border: none;
+            color: white;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            padding: 10px 20px;
+            border-radius: 8px;
+            transition: all 0.2s;
+        }
+        
+        .btn-go:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+        
+        .btn-go:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        
+        .btn-go svg {
+            transition: transform 0.2s;
+        }
+        
+        .btn-go:hover svg {
+            transform: translateX(4px);
+        }
+        
+        .error-message {
+            padding: 12px 16px;
+            background: rgba(239, 68, 68, 0.15);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            border-radius: 8px;
+            color: #fecaca;
+            font-size: 13px;
+            margin-bottom: 16px;
+        }
+        
+        /* Footer */
+        .page-footer {
+            position: fixed;
+            bottom: 20px;
+            right: 30px;
+            display: flex;
+            gap: 20px;
+        }
+        
+        .page-footer a {
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 13px;
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+        
+        .page-footer a:hover {
+            color: white;
+        }
+        
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s;
+        }
+        
+        .modal-overlay.show {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .modal-card {
+            background: white;
+            border-radius: 16px;
+            padding: 32px;
+            width: 100%;
+            max-width: 400px;
+            margin: 20px;
+            transform: translateY(-20px);
+            transition: transform 0.3s;
+        }
+        
+        .modal-overlay.show .modal-card {
+            transform: translateY(0);
+        }
+        
+        .modal-header {
+            text-align: center;
+            margin-bottom: 24px;
+        }
+        
+        .modal-icon {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #0093b0, #007a94);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 16px;
+            font-size: 28px;
+        }
+        
+        .modal-header h2 {
+            font-size: 20px;
+            font-weight: 600;
+            color: #1e3a5f;
+            margin-bottom: 8px;
+        }
+        
+        .modal-header p {
+            font-size: 14px;
+            color: #6b7280;
+        }
+        
+        .modal-input {
+            width: 100%;
+            padding: 14px 16px;
+            border: 1px solid #e5e7eb;
+            border-radius: 10px;
+            font-size: 14px;
+            transition: all 0.2s;
+            box-sizing: border-box;
+            font-family: inherit;
+        }
+        
+        .modal-input:focus {
+            outline: none;
+            border-color: #0093b0;
+            box-shadow: 0 0 0 3px rgba(0, 147, 176, 0.1);
+        }
+        
+        .modal-label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 8px;
+        }
+        
+        .modal-buttons {
+            display: flex;
+            gap: 12px;
+            margin-top: 20px;
+        }
+        
+        .btn-secondary {
+            flex: 1;
+            padding: 12px;
+            background: #f3f4f6;
+            color: #374151;
+            border: 1px solid #e5e7eb;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+        
+        .btn-secondary:hover {
+            background: #e5e7eb;
+        }
+        
+        .btn-primary-modal {
+            flex: 1;
+            padding: 12px;
+            background: linear-gradient(135deg, #0093b0, #007a94);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+        
+        .btn-primary-modal:hover {
+            box-shadow: 0 4px 12px rgba(0, 147, 176, 0.3);
+        }
+        
+        .btn-primary-modal:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+        
+        .success-message {
+            padding: 12px 16px;
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            border-radius: 8px;
+            color: #059669;
+            font-size: 13px;
+            margin-bottom: 16px;
+        }
+        
+        .error-message-modal {
+            padding: 12px 16px;
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            border-radius: 8px;
+            color: #dc2626;
+            font-size: 13px;
+            margin-bottom: 16px;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .login-wrapper {
+                flex-direction: column;
+                gap: 40px;
+            }
+            
+            .divider {
+                width: 200px;
+                height: 1px;
+                background: linear-gradient(to right, transparent, rgba(255,255,255,0.3), transparent);
+            }
+            
+            .brand-side {
+                order: 1;
+            }
+            
+            .form-side {
+                order: 2;
+                max-width: 100%;
+                width: 100%;
+            }
+            
+            .logo-container {
+                width: 160px;
+                height: 160px;
+            }
+            
+            .logo-container img {
+                max-width: 140px;
+                max-height: 140px;
+            }
+            
+            .brand-name {
+                font-size: 32px;
+            }
+            
+            .page-footer {
+                position: relative;
+                bottom: auto;
+                right: auto;
+                justify-content: center;
+                margin-top: 40px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="login-wrapper">
+        <!-- Lado izquierdo - Logo y marca -->
+        <div class="brand-side">
+            <div class="logo-container">
+                <img src="/static/img/logo.png" alt="Logo" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                <span class="logo-placeholder" style="display: none;">🏢</span>
+            </div>
+            <h1 class="brand-name">Intranet</h1>
+            <p class="brand-tagline">Sistema de Gestión de Empleados</p>
+        </div>
+        
+        <!-- Divisor -->
+        <div class="divider"></div>
+        
+        <!-- Lado derecho - Formulario -->
+        <div class="form-side">
+            <h2 class="form-title">Iniciar Sesión</h2>
+            
+            <form id="loginForm">
+                <div class="form-group">
+                    <input 
+                        type="email" 
+                        id="email" 
+                        name="email" 
+                        class="form-input"
+                        required 
+                        placeholder="Correo electrónico"
+                        autocomplete="email"
+                    >
+                </div>
+                
+                <div class="form-group">
+                    <input 
+                        type="password" 
+                        id="password" 
+                        name="password" 
+                        class="form-input"
+                        required 
+                        placeholder="Contraseña"
+                        autocomplete="current-password"
+                    >
+                </div>
+                
+                <div id="errorMessage" class="error-message" style="display: none;"></div>
+                
+                <div class="form-footer">
+                    <a href="#" class="forgot-link" onclick="abrirModalRecuperacion(); return false;">
+                        ¿Olvidaste tu contraseña?
+                    </a>
+                    <button type="submit" class="btn-go" id="submitBtn">
+                        Entrar
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M9 18l6-6-6-6"/>
+                        </svg>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Footer -->
+    <div class="page-footer">
+        <a href="#">Acerca de</a>
+        <a href="#">Contacto</a>
+        <a href="#">Ayuda</a>
+    </div>
+    
+    <!-- Modal Recuperar Contraseña -->
+    <div class="modal-overlay" id="modalRecuperacion">
+        <div class="modal-card">
+            <div class="modal-header">
+                <div class="modal-icon">🔑</div>
+                <h2>Recuperar contraseña</h2>
+                <p>Ingresa tu correo electrónico y te enviaremos un enlace para restablecer tu contraseña</p>
+            </div>
+            
+            <form id="recuperacionForm">
+                <div class="form-group">
+                    <label class="modal-label" for="emailRecuperacion">Correo electrónico</label>
+                    <input 
+                        type="email" 
+                        id="emailRecuperacion" 
+                        class="modal-input"
+                        required 
+                        placeholder="tu@correo.com"
+                    >
+                </div>
+                
+                <div id="recuperacionMessage" style="display: none;"></div>
+                
+                <div class="modal-buttons">
+                    <button type="button" class="btn-secondary" onclick="cerrarModalRecuperacion()">Cancelar</button>
+                    <button type="submit" class="btn-primary-modal" id="btnRecuperar">Enviar enlace</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <script>
+        // Login
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const errorDiv = document.getElementById('errorMessage');
+            const submitBtn = document.getElementById('submitBtn');
+            
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = 'Ingresando...';
+            errorDiv.style.display = 'none';
+            
+            try {
+                const response = await fetch('/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+                
+                if (response.ok) {
+                    window.location.href = '/dashboard';
+                } else {
+                    const data = await response.json();
+                    errorDiv.textContent = data.detail || 'Credenciales incorrectas';
+                    errorDiv.style.display = 'block';
+                }
+            } catch (error) {
+                errorDiv.textContent = 'Error de conexión. Intenta de nuevo.';
+                errorDiv.style.display = 'block';
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = 'Entrar <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>';
+            }
+        });
+        
+        // Modal funciones
+        function abrirModalRecuperacion() {
+            document.getElementById('modalRecuperacion').classList.add('show');
+            document.getElementById('emailRecuperacion').value = document.getElementById('email').value;
+            document.getElementById('recuperacionMessage').style.display = 'none';
+        }
+        
+        function cerrarModalRecuperacion() {
+            document.getElementById('modalRecuperacion').classList.remove('show');
+        }
+        
+        // Cerrar modal al hacer clic fuera
+        document.getElementById('modalRecuperacion').addEventListener('click', (e) => {
+            if (e.target === document.getElementById('modalRecuperacion')) {
+                cerrarModalRecuperacion();
+            }
+        });
+        
+        // Recuperación de contraseña
+        document.getElementById('recuperacionForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const email = document.getElementById('emailRecuperacion').value;
+            const messageDiv = document.getElementById('recuperacionMessage');
+            const btnRecuperar = document.getElementById('btnRecuperar');
+            
+            btnRecuperar.disabled = true;
+            btnRecuperar.textContent = 'Enviando...';
+            
+            try {
+                const response = await fetch('/auth/recuperar-password', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    messageDiv.className = 'success-message';
+                    messageDiv.textContent = data.message || 'Se ha enviado un enlace a tu correo';
+                    messageDiv.style.display = 'block';
+                    
+                    setTimeout(() => {
+                        cerrarModalRecuperacion();
+                    }, 3000);
+                } else {
+                    messageDiv.className = 'error-message-modal';
+                    messageDiv.textContent = data.detail || 'Error al procesar la solicitud';
+                    messageDiv.style.display = 'block';
+                }
+            } catch (error) {
+                messageDiv.className = 'error-message-modal';
+                messageDiv.textContent = 'Error de conexión';
+                messageDiv.style.display = 'block';
+            } finally {
+                btnRecuperar.disabled = false;
+                btnRecuperar.textContent = 'Enviar enlace';
+            }
+        });
+    </script>
+</body>
+</html>

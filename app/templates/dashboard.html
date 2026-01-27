@@ -1,0 +1,980 @@
+{% extends "base.html" %}
+
+{% block title %}Inicio - Intranet{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Welcome Banner - Más compacto */
+    .welcome-banner {
+        background: linear-gradient(135deg, #1e3a5f 0%, #3d5a73 50%, #0093b0 100%);
+        border-radius: 14px;
+        padding: 20px 28px;
+        color: white;
+        margin-bottom: 24px;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .welcome-banner::before {
+        content: '';
+        position: absolute;
+        top: -80%;
+        right: -15%;
+        width: 300px;
+        height: 300px;
+        background: rgba(255, 255, 255, 0.08);
+        border-radius: 50%;
+    }
+    
+    .welcome-content {
+        position: relative;
+        z-index: 1;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+    
+    .welcome-text h1 {
+        font-size: 22px;
+        font-weight: 700;
+        margin-bottom: 2px;
+    }
+    
+    .welcome-text p {
+        font-size: 13px;
+        opacity: 0.85;
+    }
+    
+    .welcome-stats {
+        display: flex;
+        gap: 20px;
+    }
+    
+    .welcome-stat {
+        text-align: center;
+        padding: 10px 20px;
+        background: rgba(255, 255, 255, 0.15);
+        border-radius: 10px;
+        backdrop-filter: blur(10px);
+    }
+    
+    .welcome-stat-value {
+        font-size: 24px;
+        font-weight: 700;
+        display: block;
+    }
+    
+    .welcome-stat-label {
+        font-size: 11px;
+        opacity: 0.9;
+        margin-top: 2px;
+    }
+    
+    /* Anuncios / Avisos Section */
+    .anuncios-section {
+        margin-bottom: 24px;
+    }
+    
+    .anuncios-card {
+        background: white;
+        border-radius: 14px;
+        border: 1px solid var(--border);
+        overflow: hidden;
+    }
+    
+    .anuncios-header {
+        padding: 14px 20px;
+        background: linear-gradient(135deg, #f59e0b, #d97706);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+    
+    .anuncios-title {
+        font-size: 15px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: white;
+    }
+    
+    .anuncios-body {
+        padding: 16px;
+    }
+    
+    /* Carousel de anuncios */
+    .anuncios-carousel {
+        position: relative;
+        overflow: hidden;
+        border-radius: 10px;
+    }
+    
+    .anuncios-track {
+        display: flex;
+        transition: transform 0.4s ease;
+    }
+    
+    .anuncio-slide {
+        min-width: 100%;
+        position: relative;
+    }
+    
+    .anuncio-slide img {
+        width: 100%;
+        height: 200px;
+        object-fit: cover;
+        border-radius: 10px;
+        cursor: pointer;
+        transition: transform 0.3s;
+    }
+    
+    .anuncio-slide img:hover {
+        transform: scale(1.02);
+    }
+    
+    .anuncio-caption {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        padding: 12px 16px;
+        background: linear-gradient(transparent, rgba(0,0,0,0.7));
+        border-radius: 0 0 10px 10px;
+        color: white;
+    }
+    
+    .anuncio-caption h4 {
+        font-size: 14px;
+        font-weight: 600;
+        margin-bottom: 2px;
+    }
+    
+    .anuncio-caption p {
+        font-size: 12px;
+        opacity: 0.9;
+    }
+    
+    /* Carousel Controls */
+    .carousel-controls {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 16px;
+        margin-top: 12px;
+    }
+    
+    .carousel-btn {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: var(--bg-main);
+        border: 1px solid var(--border);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s;
+    }
+    
+    .carousel-btn:hover {
+        background: #0093b0;
+        color: white;
+        border-color: #0093b0;
+    }
+    
+    .carousel-dots {
+        display: flex;
+        gap: 8px;
+    }
+    
+    .carousel-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--border);
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    
+    .carousel-dot.active {
+        background: #0093b0;
+        width: 24px;
+        border-radius: 4px;
+    }
+    
+    /* Empty anuncios */
+    .anuncios-empty {
+        text-align: center;
+        padding: 40px 20px;
+        color: var(--text-muted);
+    }
+    
+    .anuncios-empty-icon {
+        font-size: 40px;
+        margin-bottom: 12px;
+        opacity: 0.5;
+    }
+    
+    /* Apps Section */
+    .apps-section {
+        margin-bottom: 24px;
+    }
+    
+    .section-title {
+        font-size: 16px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: #1e3a5f;
+        padding-bottom: 10px;
+        border-bottom: 3px solid #0093b0;
+        margin-bottom: 14px;
+    }
+    
+    .apps-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+        gap: 14px;
+    }
+    
+    .app-card {
+        background: linear-gradient(135deg, #0093b0 0%, #007a94 100%);
+        border-radius: 12px;
+        padding: 20px 16px;
+        text-align: center;
+        color: white;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .app-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, transparent 100%);
+    }
+    
+    .app-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 20px rgba(0, 147, 176, 0.3);
+    }
+    
+    .app-card.purple {
+        background: linear-gradient(135deg, #3d5a73 0%, #1e3a5f 100%);
+    }
+    
+    .app-card.orange {
+        background: linear-gradient(135deg, #7badc4 0%, #0093b0 100%);
+    }
+    
+    .app-card.green {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    }
+    
+    .app-card.secondary {
+        background: white;
+        color: var(--text-primary);
+        border: 1px solid var(--border);
+    }
+    
+    .app-card.secondary::before {
+        display: none;
+    }
+    
+    .app-card.secondary:hover {
+        border-color: var(--primary);
+        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
+    }
+    
+    .app-card-icon {
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        z-index: 1;
+    }
+    
+    .app-card-icon svg {
+        width: 28px;
+        height: 28px;
+    }
+    
+    .app-card-label {
+        font-size: 12px;
+        font-weight: 600;
+        position: relative;
+        z-index: 1;
+    }
+    
+    /* Dashboard Grid */
+    .dashboard-grid {
+        display: grid;
+        grid-template-columns: 1.5fr 1fr;
+        gap: 20px;
+    }
+    
+    /* Cards */
+    .dash-card {
+        background: white;
+        border-radius: 12px;
+        border: 1px solid var(--border);
+        overflow: hidden;
+    }
+    
+    .dash-card-header {
+        padding: 14px 20px;
+        background: linear-gradient(135deg, #1e3a5f, #3d5a73);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+    
+    .dash-card-title {
+        font-size: 14px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: white;
+    }
+    
+    .dash-card-body {
+        padding: 16px 20px;
+    }
+    
+    /* Activity Summary */
+    .activity-summary {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 10px;
+        margin-bottom: 16px;
+    }
+    
+    .day-summary {
+        text-align: center;
+        padding: 12px 8px;
+        background: var(--bg-main);
+        border-radius: 8px;
+        transition: all 0.2s;
+    }
+    
+    .day-summary.active {
+        background: linear-gradient(135deg, #0093b0, #007a94);
+        color: white;
+    }
+    
+    .day-summary.completed {
+        background: rgba(16, 185, 129, 0.1);
+        border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+    
+    .day-number {
+        font-size: 16px;
+        font-weight: 700;
+        margin-bottom: 2px;
+    }
+    
+    .day-name {
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: uppercase;
+        margin-bottom: 4px;
+        opacity: 0.8;
+    }
+    
+    .day-hours {
+        font-size: 18px;
+        font-weight: 700;
+    }
+    
+    /* Progress */
+    .week-progress {
+        margin-top: 12px;
+    }
+    
+    .progress-header {
+        display: flex;
+        justify-content: space-between;
+        font-size: 12px;
+        color: var(--text-secondary);
+        margin-bottom: 6px;
+    }
+    
+    .progress-bar {
+        height: 6px;
+        background: var(--bg-main);
+        border-radius: 3px;
+        overflow: hidden;
+    }
+    
+    .progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #0093b0, #00b4d8);
+        border-radius: 3px;
+        transition: width 0.5s ease;
+    }
+    
+    /* Quick Stats */
+    .quick-stats {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+    
+    .quick-stat-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px;
+        background: var(--bg-main);
+        border-radius: 10px;
+    }
+    
+    .quick-stat-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+    }
+    
+    .quick-stat-icon.primary { background: rgba(0, 147, 176, 0.1); }
+    .quick-stat-icon.warning { background: rgba(245, 158, 11, 0.1); }
+    .quick-stat-icon.success { background: rgba(16, 185, 129, 0.1); }
+    
+    .quick-stat-info {
+        flex: 1;
+    }
+    
+    .quick-stat-value {
+        font-size: 18px;
+        font-weight: 700;
+        color: var(--text-primary);
+    }
+    
+    .quick-stat-label {
+        font-size: 11px;
+        color: var(--text-secondary);
+    }
+    
+    /* Modal para ver imagen grande */
+    .modal-imagen {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.9);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 2000;
+        padding: 20px;
+    }
+    
+    .modal-imagen.show {
+        display: flex;
+    }
+    
+    .modal-imagen img {
+        max-width: 90%;
+        max-height: 90%;
+        object-fit: contain;
+        border-radius: 8px;
+    }
+    
+    .modal-imagen-close {
+        position: absolute;
+        top: 20px;
+        right: 30px;
+        color: white;
+        font-size: 36px;
+        cursor: pointer;
+        opacity: 0.8;
+        transition: opacity 0.2s;
+    }
+    
+    .modal-imagen-close:hover {
+        opacity: 1;
+    }
+    
+    /* Responsive */
+    @media (max-width: 900px) {
+        .dashboard-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .welcome-content {
+            flex-direction: column;
+            text-align: center;
+            gap: 16px;
+        }
+        
+        .welcome-stats {
+            width: 100%;
+            justify-content: center;
+        }
+    }
+    
+    @media (max-width: 600px) {
+        .apps-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+        
+        .activity-summary {
+            grid-template-columns: repeat(5, 1fr);
+            gap: 6px;
+        }
+        
+        .day-summary {
+            padding: 10px 4px;
+        }
+        
+        .day-hours {
+            font-size: 16px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Welcome Banner - Compacto -->
+<div class="welcome-banner">
+    <div class="welcome-content">
+        <div class="welcome-text">
+            <h1>¡Hola, <span id="userName">Usuario</span>!</h1>
+            <p id="fechaHoy">Cargando fecha...</p>
+        </div>
+        <div class="welcome-stats">
+            <div class="welcome-stat">
+                <span class="welcome-stat-value" id="diasVacaciones">0</span>
+                <span class="welcome-stat-label">Días vacaciones</span>
+            </div>
+            <div class="welcome-stat">
+                <span class="welcome-stat-value" id="horasSemana">0</span>
+                <span class="welcome-stat-label">Horas semana</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Sección de Anuncios -->
+<section class="anuncios-section">
+    <div class="anuncios-card">
+        <div class="anuncios-header">
+            <h3 class="anuncios-title">
+                <span>📢</span> Avisos Importantes
+            </h3>
+        </div>
+        <div class="anuncios-body">
+            <div class="anuncios-carousel" id="anunciosCarousel">
+                <div class="anuncios-track" id="anunciosTrack">
+                    <!-- Los anuncios se cargarán dinámicamente -->
+                </div>
+            </div>
+            <div class="carousel-controls" id="carouselControls" style="display: none;">
+                <button class="carousel-btn" onclick="moverCarousel(-1)">←</button>
+                <div class="carousel-dots" id="carouselDots"></div>
+                <button class="carousel-btn" onclick="moverCarousel(1)">→</button>
+            </div>
+            <div class="anuncios-empty" id="anunciosEmpty">
+                <div class="anuncios-empty-icon">📋</div>
+                <p>No hay avisos por el momento</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Apps Section -->
+<section class="apps-section">
+    <h2 class="section-title">
+        <span>⚡</span> Accesos rápidos
+    </h2>
+    <div class="apps-grid">
+        <a href="/actividades" class="app-card">
+            <div class="app-card-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                    <line x1="16" y1="2" x2="16" y2="6"></line>
+                    <line x1="8" y1="2" x2="8" y2="6"></line>
+                    <line x1="3" y1="10" x2="21" y2="10"></line>
+                </svg>
+            </div>
+            <span class="app-card-label">Actividades</span>
+        </a>
+        
+        <a href="/vacaciones" class="app-card purple">
+            <div class="app-card-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <path d="M12 6v6l4 2"></path>
+                </svg>
+            </div>
+            <span class="app-card-label">Vacaciones</span>
+        </a>
+        
+        <a href="#" onclick="descargarReporteMensual(); return false;" class="app-card orange">
+            <div class="app-card-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                    <polyline points="14 2 14 8 20 8"></polyline>
+                    <line x1="16" y1="13" x2="8" y2="13"></line>
+                    <line x1="16" y1="17" x2="8" y2="17"></line>
+                </svg>
+            </div>
+            <span class="app-card-label">Mi Reporte</span>
+        </a>
+        
+        <a href="/perfil" class="app-card secondary">
+            <div class="app-card-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="12" cy="7" r="4"></circle>
+                </svg>
+            </div>
+            <span class="app-card-label">Mi Perfil</span>
+        </a>
+        
+        <a href="/mis-recibos" class="app-card green">
+            <div class="app-card-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                    <polyline points="14 2 14 8 20 8"></polyline>
+                    <line x1="12" y1="18" x2="12" y2="12"></line>
+                    <line x1="9" y1="15" x2="15" y2="15"></line>
+                </svg>
+            </div>
+            <span class="app-card-label">Mis Recibos</span>
+        </a>
+        
+        {% if user.es_admin %}
+        <a href="/admin" class="app-card secondary">
+            <div class="app-card-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="3" width="7" height="7"></rect>
+                    <rect x="14" y="3" width="7" height="7"></rect>
+                    <rect x="14" y="14" width="7" height="7"></rect>
+                    <rect x="3" y="14" width="7" height="7"></rect>
+                </svg>
+            </div>
+            <span class="app-card-label">Admin</span>
+        </a>
+        {% endif %}
+    </div>
+</section>
+
+<!-- Dashboard Grid -->
+<div class="dashboard-grid">
+    <!-- Left: Activities -->
+    <div class="dash-card">
+        <div class="dash-card-header">
+            <h3 class="dash-card-title">
+                <span>📅</span> Actividades de la semana
+            </h3>
+            <a href="/actividades" class="btn btn-sm btn-primary">Capturar</a>
+        </div>
+        <div class="dash-card-body">
+            <div class="activity-summary" id="activitySummary">
+                <div class="day-summary"><div class="day-name">LUN</div><div class="day-hours">-</div></div>
+                <div class="day-summary"><div class="day-name">MAR</div><div class="day-hours">-</div></div>
+                <div class="day-summary"><div class="day-name">MIÉ</div><div class="day-hours">-</div></div>
+                <div class="day-summary"><div class="day-name">JUE</div><div class="day-hours">-</div></div>
+                <div class="day-summary"><div class="day-name">VIE</div><div class="day-hours">-</div></div>
+            </div>
+            
+            <div class="week-progress">
+                <div class="progress-header">
+                    <span>Progreso semanal</span>
+                    <span id="progressText">0 / 40 horas</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Right: Quick Stats -->
+    <div class="dash-card">
+        <div class="dash-card-header">
+            <h3 class="dash-card-title">
+                <span>📊</span> Resumen
+            </h3>
+        </div>
+        <div class="dash-card-body">
+            <div class="quick-stats">
+                <div class="quick-stat-item">
+                    <div class="quick-stat-icon primary">🏖️</div>
+                    <div class="quick-stat-info">
+                        <div class="quick-stat-value" id="vacacionesDisponibles">-</div>
+                        <div class="quick-stat-label">Días de vacaciones</div>
+                    </div>
+                </div>
+                <div class="quick-stat-item">
+                    <div class="quick-stat-icon warning">⏳</div>
+                    <div class="quick-stat-info">
+                        <div class="quick-stat-value" id="solicitudesPendientes">0</div>
+                        <div class="quick-stat-label">Solicitudes pendientes</div>
+                    </div>
+                </div>
+                <div class="quick-stat-item">
+                    <div class="quick-stat-icon success">✓</div>
+                    <div class="quick-stat-info">
+                        <div class="quick-stat-value" id="diasCapturados">0/5</div>
+                        <div class="quick-stat-label">Días capturados</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para ver imagen grande -->
+<div class="modal-imagen" id="modalImagen" onclick="cerrarModalImagen()">
+    <span class="modal-imagen-close">&times;</span>
+    <img id="imagenGrande" src="" alt="Anuncio">
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const diasSemana = ['LUN', 'MAR', 'MIÉ', 'JUE', 'VIE'];
+    let currentSlide = 0;
+    let anuncios = [];
+    
+    // Mostrar fecha actual
+    function mostrarFecha() {
+        const ahora = new Date();
+        const opciones = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+        const fechaFormateada = ahora.toLocaleDateString('es-MX', opciones);
+        document.getElementById('fechaHoy').textContent = fechaFormateada.charAt(0).toUpperCase() + fechaFormateada.slice(1);
+    }
+    
+    async function cargarPerfil() {
+        try {
+            const response = await fetch('/api/empleados/me');
+            if (response.ok) {
+                const data = await response.json();
+                // Usar nombre_completo si existe, sino combinar nombre y apellidos
+                const nombreMostrar = data.nombre_completo || data.nombre || 'Usuario';
+                document.getElementById('userName').textContent = nombreMostrar;
+                document.getElementById('diasVacaciones').textContent = data.dias_vacaciones || 0;
+                document.getElementById('vacacionesDisponibles').textContent = data.dias_vacaciones || 0;
+                
+                const greetingName = document.getElementById('greetingName');
+                if (greetingName) greetingName.textContent = nombreMostrar;
+            }
+        } catch (error) {
+            console.error('Error:', error);
+        }
+    }
+    
+    async function cargarActividades() {
+        try {
+            const response = await fetch('/api/actividades/semana');
+            if (response.ok) {
+                const data = await response.json();
+                
+                let totalHoras = 0;
+                let diasCapturados = 0;
+                const actividadesPorDia = {};
+                
+                // Solo contar horas si hay descripción capturada
+                data.forEach(act => {
+                    const fecha = new Date(act.fecha + 'T00:00:00');
+                    const dayIndex = (fecha.getDay() + 6) % 7;
+                    if (dayIndex < 5) {
+                        // Solo guardar horas si hay descripción
+                        if (act.descripcion && act.descripcion.trim() !== '') {
+                            actividadesPorDia[dayIndex] = {
+                                horas: parseFloat(act.horas_trabajadas || 0),
+                                fecha: fecha
+                            };
+                            totalHoras += parseFloat(act.horas_trabajadas || 0);
+                            diasCapturados++;
+                        }
+                    }
+                });
+                
+                // Calcular fechas de la semana actual
+                const hoy = new Date();
+                const diaSemanaHoy = hoy.getDay();
+                const lunes = new Date(hoy);
+                lunes.setDate(hoy.getDate() - ((diaSemanaHoy + 6) % 7));
+                
+                const summaryContainer = document.getElementById('activitySummary');
+                let summaryHTML = '';
+                const today = new Date().getDay();
+                
+                for (let i = 0; i < 5; i++) {
+                    const fechaDia = new Date(lunes);
+                    fechaDia.setDate(lunes.getDate() + i);
+                    const diaDelMes = fechaDia.getDate();
+                    
+                    const actividadDia = actividadesPorDia[i];
+                    const horas = actividadDia ? actividadDia.horas : 0;
+                    const isToday = (i + 1) === today;
+                    const isCompleted = horas > 0;
+                    
+                    let className = 'day-summary';
+                    if (isToday) className += ' active';
+                    else if (isCompleted) className += ' completed';
+                    
+                    summaryHTML += `
+                        <div class="${className}">
+                            <div class="day-number">${diaDelMes}</div>
+                            <div class="day-name">${diasSemana[i]}</div>
+                            <div class="day-hours">${horas > 0 ? horas.toFixed(1) : '-'}</div>
+                        </div>
+                    `;
+                }
+                summaryContainer.innerHTML = summaryHTML;
+                
+                document.getElementById('horasSemana').textContent = totalHoras.toFixed(1);
+                document.getElementById('diasCapturados').textContent = `${diasCapturados}/5`;
+                
+                const porcentaje = Math.min((totalHoras / 40) * 100, 100);
+                document.getElementById('progressFill').style.width = `${porcentaje}%`;
+                document.getElementById('progressText').textContent = `${totalHoras.toFixed(1)} / 40 horas`;
+            }
+        } catch (error) {
+            console.error('Error:', error);
+        }
+    }
+    
+    async function cargarVacaciones() {
+        try {
+            const response = await fetch('/api/vacaciones/mis-solicitudes?estatus=pendiente');
+            if (response.ok) {
+                const data = await response.json();
+                document.getElementById('solicitudesPendientes').textContent = data.length;
+            }
+        } catch (error) {
+            console.error('Error:', error);
+        }
+    }
+    
+    async function cargarAnuncios() {
+        try {
+            const response = await fetch('/api/anuncios/activos');
+            if (response.ok) {
+                anuncios = await response.json();
+                renderizarAnuncios();
+            }
+        } catch (error) {
+            // Si no existe el endpoint, mostrar mensaje vacío
+            console.log('Anuncios no disponibles');
+            document.getElementById('anunciosEmpty').style.display = 'block';
+        }
+    }
+    
+    function renderizarAnuncios() {
+        const track = document.getElementById('anunciosTrack');
+        const controls = document.getElementById('carouselControls');
+        const empty = document.getElementById('anunciosEmpty');
+        const dots = document.getElementById('carouselDots');
+        
+        if (!anuncios || anuncios.length === 0) {
+            empty.style.display = 'block';
+            controls.style.display = 'none';
+            return;
+        }
+        
+        empty.style.display = 'none';
+        controls.style.display = 'flex';
+        
+        // Renderizar slides
+        track.innerHTML = anuncios.map((anuncio, index) => `
+            <div class="anuncio-slide">
+                <img src="${anuncio.imagen_url}" alt="${anuncio.titulo}" onclick="verImagenGrande('${anuncio.imagen_url}')">
+                ${anuncio.titulo ? `
+                    <div class="anuncio-caption">
+                        <h4>${anuncio.titulo}</h4>
+                        ${anuncio.descripcion ? `<p>${anuncio.descripcion}</p>` : ''}
+                    </div>
+                ` : ''}
+            </div>
+        `).join('');
+        
+        // Renderizar dots
+        dots.innerHTML = anuncios.map((_, index) => `
+            <div class="carousel-dot ${index === 0 ? 'active' : ''}" onclick="irASlide(${index})"></div>
+        `).join('');
+    }
+    
+    function moverCarousel(direccion) {
+        if (anuncios.length === 0) return;
+        
+        currentSlide += direccion;
+        if (currentSlide < 0) currentSlide = anuncios.length - 1;
+        if (currentSlide >= anuncios.length) currentSlide = 0;
+        
+        actualizarCarousel();
+    }
+    
+    function irASlide(index) {
+        currentSlide = index;
+        actualizarCarousel();
+    }
+    
+    function actualizarCarousel() {
+        const track = document.getElementById('anunciosTrack');
+        track.style.transform = `translateX(-${currentSlide * 100}%)`;
+        
+        // Actualizar dots
+        document.querySelectorAll('.carousel-dot').forEach((dot, index) => {
+            dot.classList.toggle('active', index === currentSlide);
+        });
+    }
+    
+    function verImagenGrande(url) {
+        document.getElementById('imagenGrande').src = url;
+        document.getElementById('modalImagen').classList.add('show');
+    }
+    
+    function cerrarModalImagen() {
+        document.getElementById('modalImagen').classList.remove('show');
+    }
+    
+    function descargarReporteMensual() {
+        const now = new Date();
+        window.open(`/api/reportes/mi-reporte-mensual/${now.getFullYear()}/${now.getMonth() + 1}`, '_blank');
+    }
+    
+    // Auto-avanzar carousel cada 5 segundos
+    setInterval(() => {
+        if (anuncios.length > 1) {
+            moverCarousel(1);
+        }
+    }, 5000);
+    
+    document.addEventListener('DOMContentLoaded', () => {
+        mostrarFecha();
+        cargarPerfil();
+        cargarActividades();
+        cargarVacaciones();
+        cargarAnuncios();
+    });
+    
+    // Cerrar modal con ESC
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') cerrarModalImagen();
+    });
+</script>
+{% endblock %}
