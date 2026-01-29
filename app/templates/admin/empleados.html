@@ -261,6 +261,11 @@
         color: #8b5cf6;
     }
     
+    .badge-inventario {
+        background: rgba(245, 158, 11, 0.1);
+        color: #d97706;
+    }
+    
     .badge-user {
         background: rgba(107, 114, 128, 0.1);
         color: #6b7280;
@@ -455,6 +460,11 @@
     .expediente-badge.admin {
         background: rgba(139, 92, 246, 0.1);
         color: #8b5cf6;
+    }
+    
+    .expediente-badge.inventario {
+        background: rgba(245, 158, 11, 0.1);
+        color: #d97706;
     }
     
     .expediente-badge.user {
@@ -932,11 +942,13 @@
                         <input type="number" id="dias_vacaciones" class="form-input" value="0" min="0" step="0.5">
                     </div>
                     <div class="form-group">
-                        <div class="form-check">
-                            <input type="checkbox" id="es_admin">
-                            <label for="es_admin">Es administrador</label>
-                        </div>
-                        <div class="form-check" id="activoGroup" style="display: none;">
+                        <label class="form-label">Rol de acceso</label>
+                        <select id="rol" class="form-select">
+                            <option value="usuario">👤 Usuario (acceso básico)</option>
+                            <option value="inventario">📦 Inventario (gestión de equipos)</option>
+                            <option value="admin">👑 Administrador (acceso total)</option>
+                        </select>
+                        <div class="form-check" id="activoGroup" style="display: none; margin-top: 10px;">
                             <input type="checkbox" id="activo" checked>
                             <label for="activo">Empleado activo</label>
                         </div>
@@ -1130,7 +1142,7 @@ async function cargarEmpleados() {
 function actualizarEstadisticas() {
     document.getElementById('totalEmpleados').textContent = empleados.length;
     document.getElementById('empleadosActivos').textContent = empleados.filter(e => e.activo).length;
-    document.getElementById('empleadosAdmin').textContent = empleados.filter(e => e.es_admin).length;
+    document.getElementById('empleadosAdmin').textContent = empleados.filter(e => e.rol === 'admin' || e.es_admin).length;
 }
 
 function renderizarTabla() {
@@ -1179,8 +1191,8 @@ function renderizarTabla() {
                 <td>${emp.proyecto || '-'}</td>
                 <td>${emp.dias_vacaciones} días</td>
                 <td>
-                    <span class="badge ${emp.es_admin ? 'badge-admin' : 'badge-user'}">
-                        ${emp.es_admin ? '👑 Admin' : '👤 Usuario'}
+                    <span class="badge ${emp.rol === 'admin' || emp.es_admin ? 'badge-admin' : emp.rol === 'inventario' ? 'badge-inventario' : 'badge-user'}">
+                        ${emp.rol === 'admin' || emp.es_admin ? '👑 Admin' : emp.rol === 'inventario' ? '📦 Inventario' : '👤 Usuario'}
                     </span>
                 </td>
                 <td>
@@ -1250,7 +1262,7 @@ function editarEmpleado(id) {
     document.getElementById('proyecto_id').value = proyecto?.id || '';
     document.getElementById('fecha_ingreso').value = emp.fecha_ingreso || '';
     document.getElementById('dias_vacaciones').value = emp.dias_vacaciones || 0;
-    document.getElementById('es_admin').checked = emp.es_admin;
+    document.getElementById('rol').value = emp.rol || (emp.es_admin ? 'admin' : 'usuario');
     document.getElementById('activo').checked = emp.activo;
     document.getElementById('activoGroup').style.display = 'block';
     
@@ -1295,6 +1307,7 @@ async function guardarEmpleado() {
     try {
         if (modoEdicion) {
             // Actualizar datos del empleado
+            const rol = document.getElementById('rol').value;
             const data = {
                 nombre: nombre,
                 apellidos: apellidos,
@@ -1302,7 +1315,8 @@ async function guardarEmpleado() {
                 supervisor_id: document.getElementById('supervisor_id').value || null,
                 proyecto_id: document.getElementById('proyecto_id').value || null,
                 dias_vacaciones: parseFloat(document.getElementById('dias_vacaciones').value) || 0,
-                es_admin: document.getElementById('es_admin').checked,
+                rol: rol,
+                es_admin: rol === 'admin',
                 activo: document.getElementById('activo').checked
             };
             
@@ -1353,7 +1367,8 @@ async function guardarEmpleado() {
                 proyecto_id: proyectoId ? parseInt(proyectoId) : null,
                 fecha_ingreso: fechaIngreso || null,
                 dias_vacaciones: parseFloat(document.getElementById('dias_vacaciones').value) || 0,
-                es_admin: document.getElementById('es_admin').checked
+                rol: document.getElementById('rol').value,
+                es_admin: document.getElementById('rol').value === 'admin'
             };
             
             console.log('Enviando datos:', JSON.stringify(data, null, 2));
@@ -1431,9 +1446,12 @@ async function verFichaEmpleado(id) {
     document.getElementById('fichaExpEmail').textContent = emp.email;
     
     // Rol
-    document.getElementById('fichaExpRol').innerHTML = emp.es_admin 
+    const rolTexto = emp.rol === 'admin' || emp.es_admin 
         ? '<span class="expediente-badge admin">👑 Administrador</span>'
-        : '<span class="expediente-badge user">👤 Usuario</span>';
+        : emp.rol === 'inventario' 
+            ? '<span class="expediente-badge inventario">📦 Inventario</span>'
+            : '<span class="expediente-badge user">👤 Usuario</span>';
+    document.getElementById('fichaExpRol').innerHTML = rolTexto;
     
     // Estado
     document.getElementById('fichaExpEstado').innerHTML = emp.activo

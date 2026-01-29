@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException, Depends
 from typing import List, Optional
 from datetime import date
 from app.database import supabase, get_admin_client
-from app.auth import get_current_user, get_current_admin
+from app.auth import get_current_user, get_current_admin, get_inventario_user
 from app.models import (
     EquipoCreate, EquipoUpdate, Equipo, EquipoCompleto,
     AsignacionEquipo, EstadoEquipo, TipoEquipo
@@ -19,7 +19,7 @@ async def listar_equipos(
     tipo: Optional[TipoEquipo] = None,
     estado: Optional[EstadoEquipo] = None,
     empleado_id: Optional[str] = None,
-    current_user: dict = Depends(get_current_admin)
+    current_user: dict = Depends(get_inventario_user)
 ):
     """Lista todos los equipos con filtros opcionales"""
     query = admin_client.table("equipos").select(
@@ -50,7 +50,7 @@ async def listar_equipos(
 @router.get("/disponibles", response_model=List[dict])
 async def listar_equipos_disponibles(
     tipo: Optional[TipoEquipo] = None,
-    current_user: dict = Depends(get_current_admin)
+    current_user: dict = Depends(get_inventario_user)
 ):
     """Lista equipos disponibles para asignación"""
     query = admin_client.table("equipos").select("*").eq("estado", "disponible")
@@ -63,7 +63,7 @@ async def listar_equipos_disponibles(
 
 
 @router.get("/estadisticas")
-async def obtener_estadisticas(current_user: dict = Depends(get_current_admin)):
+async def obtener_estadisticas(current_user: dict = Depends(get_inventario_user)):
     """Obtiene estadísticas del inventario"""
     # Total por estado
     response = admin_client.table("equipos").select("estado").execute()
@@ -100,7 +100,7 @@ async def obtener_estadisticas(current_user: dict = Depends(get_current_admin)):
 @router.get("/{equipo_id}")
 async def obtener_equipo(
     equipo_id: str,
-    current_user: dict = Depends(get_current_admin)
+    current_user: dict = Depends(get_inventario_user)
 ):
     """Obtiene un equipo por ID"""
     response = admin_client.table("equipos").select(
@@ -120,7 +120,7 @@ async def obtener_equipo(
 @router.post("/")
 async def crear_equipo(
     equipo: EquipoCreate,
-    current_user: dict = Depends(get_current_admin)
+    current_user: dict = Depends(get_inventario_user)
 ):
     """Crea un nuevo equipo"""
     # Verificar número de serie único si se proporciona
@@ -174,7 +174,7 @@ async def crear_equipo(
 async def actualizar_equipo(
     equipo_id: str,
     equipo: EquipoUpdate,
-    current_user: dict = Depends(get_current_admin)
+    current_user: dict = Depends(get_inventario_user)
 ):
     """Actualiza un equipo"""
     # Verificar que existe
@@ -209,7 +209,7 @@ async def actualizar_equipo(
 async def asignar_equipo(
     equipo_id: str,
     asignacion: AsignacionEquipo,
-    current_user: dict = Depends(get_current_admin)
+    current_user: dict = Depends(get_inventario_user)
 ):
     """Asigna un equipo a un empleado"""
     # Verificar que el equipo existe y está disponible
@@ -259,7 +259,7 @@ async def asignar_equipo(
 async def desasignar_equipo(
     equipo_id: str,
     notas: Optional[str] = None,
-    current_user: dict = Depends(get_current_admin)
+    current_user: dict = Depends(get_inventario_user)
 ):
     """Desasigna un equipo de un empleado"""
     # Verificar que el equipo existe y está asignado
@@ -294,7 +294,7 @@ async def desasignar_equipo(
 @router.get("/{equipo_id}/historial")
 async def obtener_historial_equipo(
     equipo_id: str,
-    current_user: dict = Depends(get_current_admin)
+    current_user: dict = Depends(get_inventario_user)
 ):
     """Obtiene el historial de asignaciones de un equipo"""
     response = admin_client.table("historial_equipos").select(
@@ -330,7 +330,7 @@ async def obtener_equipos_empleado(
 @router.delete("/{equipo_id}")
 async def eliminar_equipo(
     equipo_id: str,
-    current_user: dict = Depends(get_current_admin)
+    current_user: dict = Depends(get_inventario_user)
 ):
     """Elimina un equipo (solo si está disponible o dado de baja)"""
     # Verificar estado

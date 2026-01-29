@@ -58,6 +58,7 @@ async def login(response: Response, login_data: LoginRequest):
             "sub": empleado["id"],
             "email": empleado["email"],
             "es_admin": empleado["es_admin"],
+            "rol": empleado.get("rol", "admin" if empleado["es_admin"] else "usuario"),
             "tiene_puesto": empleado.get("puesto_id") is not None
         },
         expires_delta=timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)

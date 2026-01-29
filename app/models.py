@@ -99,6 +99,7 @@ class EmpleadoBase(BaseModel):
     proyecto_id: Optional[int] = None
     fecha_ingreso: Optional[str] = None  # Cambiado a string para compatibilidad JSON
     dias_vacaciones: float = 0  # Cambiado de Decimal a float
+    rol: str = 'usuario'  # 'admin', 'inventario', 'usuario'
     es_admin: bool = False
 
 
@@ -113,6 +114,7 @@ class EmpleadoUpdate(BaseModel):
     supervisor_id: Optional[int] = None
     proyecto_id: Optional[int] = None
     dias_vacaciones: Optional[float] = None
+    rol: Optional[str] = None
     es_admin: Optional[bool] = None
     activo: Optional[bool] = None
 
@@ -127,6 +129,7 @@ class Empleado(BaseModel):
     proyecto_id: Optional[int] = None
     fecha_ingreso: Optional[str] = None
     dias_vacaciones: float = 0
+    rol: str = 'usuario'
     es_admin: bool = False
     activo: bool = True
     created_at: Optional[str] = None
@@ -147,6 +150,7 @@ class EmpleadoCompleto(BaseModel):
     proyecto: Optional[str] = None
     fecha_ingreso: Optional[str] = None
     dias_vacaciones: float = 0
+    rol: str = 'usuario'
     es_admin: bool
     activo: bool
 
@@ -274,6 +278,7 @@ class TokenData(BaseModel):
     user_id: Optional[str] = None
     email: Optional[str] = None
     es_admin: bool = False
+    rol: str = 'usuario'  # 'admin', 'inventario', 'usuario'
     tiene_puesto: bool = True  # Si tiene puesto asignado (es empleado regular)
 
 

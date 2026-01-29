@@ -51,12 +51,13 @@ def decode_token(token: str) -> Optional[TokenData]:
         user_id: str = payload.get("sub")
         email: str = payload.get("email")
         es_admin: bool = payload.get("es_admin", False)
+        rol: str = payload.get("rol", "usuario")
         tiene_puesto: bool = payload.get("tiene_puesto", True)
         
         if user_id is None:
             return None
             
-        return TokenData(user_id=user_id, email=email, es_admin=es_admin, tiene_puesto=tiene_puesto)
+        return TokenData(user_id=user_id, email=email, es_admin=es_admin, rol=rol, tiene_puesto=tiene_puesto)
     except JWTError:
         return None
 
@@ -98,10 +99,22 @@ async def get_current_admin(
     current_user: TokenData = Depends(get_current_user)
 ) -> TokenData:
     """Verifica que el usuario actual sea administrador"""
-    if not current_user.es_admin:
+    if not current_user.es_admin and current_user.rol != 'admin':
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="No tienes permisos de administrador"
+        )
+    return current_user
+
+
+async def get_inventario_user(
+    current_user: TokenData = Depends(get_current_user)
+) -> TokenData:
+    """Verifica que el usuario tenga acceso a inventario (admin o rol inventario)"""
+    if not current_user.es_admin and current_user.rol not in ['admin', 'inventario']:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="No tienes permisos para gestionar inventario"
         )
     return current_user
 

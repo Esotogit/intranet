@@ -152,7 +152,8 @@ async def admin_catalogos(request: Request, user: Optional[TokenData] = Depends(
 @router.get("/admin/inventario")
 async def admin_inventario(request: Request, user: Optional[TokenData] = Depends(get_optional_user)):
     """Gestión de inventario de equipos"""
-    if not user or not user.es_admin:
+    # Permitir acceso a admin o usuarios con rol inventario
+    if not user or (not user.es_admin and user.rol not in ['admin', 'inventario']):
         return RedirectResponse(url="/login")
     return templates.TemplateResponse("admin/inventario.html", {
         "request": request,
