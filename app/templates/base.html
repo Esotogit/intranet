@@ -119,11 +119,14 @@
                     <span>Reportes</span>
                 </a>
                 {% endif %}
+                {% endif %}
                 
-                {% if user.es_admin or user.rol == 'inventario' %}
                 {% if user.rol == 'inventario' and not user.es_admin %}
+                <div class="sidebar-divider"></div>
                 <span class="sidebar-section-title">Gestión</span>
                 {% endif %}
+                
+                {% if user.es_admin or user.rol == 'inventario' %}
                 <a href="/admin/inventario" class="sidebar-item {% if request.url.path == '/admin/inventario' %}active{% endif %}" title="Inventario">
                     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
