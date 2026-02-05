@@ -517,6 +517,34 @@
     </div>
 </div>
 
+<!-- Carga Masiva -->
+<div class="upload-section" style="margin-top: 16px; background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%); border: 2px dashed #10b981;">
+    <h3>📦 Carga Masiva de Recibos</h3>
+    <p style="font-size: 13px; color: #6b7280; margin-bottom: 16px;">
+        Sube múltiples PDFs y el sistema detectará automáticamente el empleado, mes y quincena.<br>
+        <strong>Formato requerido:</strong> RE_3107_Quincenal_AÑO_QUINCENA_NUMEROEMPLEADO_XXX.pdf
+    </p>
+    
+    <div class="drop-zone" id="dropZoneMasivo" style="border-color: #10b981;">
+        <div class="drop-zone-icon">📦</div>
+        <div class="drop-zone-text">
+            Arrastra múltiples PDFs aquí o <strong>haz clic para seleccionar</strong>
+        </div>
+        <div id="fileCountMasivo" style="display: none; margin-top: 10px; font-weight: 600; color: #059669;"></div>
+    </div>
+    <input type="file" id="fileInputMasivo" accept=".pdf" multiple style="display: none;">
+    
+    <button class="btn-upload" onclick="subirMasivo()" id="btnSubirMasivo" disabled style="margin-top: 16px; background: linear-gradient(135deg, #059669 0%, #10b981 100%);">
+        <span>📦</span> Subir Todos los Recibos
+    </button>
+    
+    <!-- Resultados de carga masiva -->
+    <div id="resultadosMasivo" style="display: none; margin-top: 16px;">
+        <div id="resumenMasivo" style="padding: 12px; border-radius: 8px; margin-bottom: 12px;"></div>
+        <div id="detalleMasivo" style="max-height: 200px; overflow-y: auto; font-size: 12px;"></div>
+    </div>
+</div>
+
 <!-- Filtros -->
 <div class="filters-row">
     <div class="filter-group">
@@ -874,6 +902,153 @@ async function eliminarRecibo(id) {
         console.error('Error:', error);
         mostrarToast('Error de conexión', 'error');
     }
+}
+
+// ==========================================
+// CARGA MASIVA
+// ==========================================
+let archivosMasivo = [];
+
+const dropZoneMasivo = document.getElementById('dropZoneMasivo');
+const fileInputMasivo = document.getElementById('fileInputMasivo');
+const btnSubirMasivo = document.getElementById('btnSubirMasivo');
+
+dropZoneMasivo.addEventListener('click', () => fileInputMasivo.click());
+
+dropZoneMasivo.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    dropZoneMasivo.classList.add('drag-over');
+});
+
+dropZoneMasivo.addEventListener('dragleave', () => {
+    dropZoneMasivo.classList.remove('drag-over');
+});
+
+dropZoneMasivo.addEventListener('drop', (e) => {
+    e.preventDefault();
+    dropZoneMasivo.classList.remove('drag-over');
+    
+    const files = Array.from(e.dataTransfer.files).filter(f => f.name.toLowerCase().endsWith('.pdf'));
+    if (files.length > 0) {
+        archivosMasivo = files;
+        actualizarContadorMasivo();
+    }
+});
+
+fileInputMasivo.addEventListener('change', (e) => {
+    const files = Array.from(e.target.files).filter(f => f.name.toLowerCase().endsWith('.pdf'));
+    if (files.length > 0) {
+        archivosMasivo = files;
+        actualizarContadorMasivo();
+    }
+});
+
+function actualizarContadorMasivo() {
+    const fileCount = document.getElementById('fileCountMasivo');
+    if (archivosMasivo.length > 0) {
+        fileCount.textContent = `📄 ${archivosMasivo.length} archivo(s) seleccionado(s)`;
+        fileCount.style.display = 'block';
+        btnSubirMasivo.disabled = false;
+    } else {
+        fileCount.style.display = 'none';
+        btnSubirMasivo.disabled = true;
+    }
+}
+
+async function subirMasivo() {
+    if (archivosMasivo.length === 0) {
+        mostrarToast('Selecciona al menos un archivo PDF', 'error');
+        return;
+    }
+    
+    btnSubirMasivo.disabled = true;
+    btnSubirMasivo.innerHTML = '<span>⏳</span> Subiendo... 0/' + archivosMasivo.length;
+    
+    const formData = new FormData();
+    archivosMasivo.forEach(archivo => {
+        formData.append('archivos', archivo);
+    });
+    
+    try {
+        const response = await fetch('/api/recibos/subir-masivo', {
+            method: 'POST',
+            body: formData
+        });
+        
+        const resultado = await response.json();
+        
+        // Mostrar resultados
+        mostrarResultadosMasivo(resultado);
+        
+        // Recargar lista y estadísticas
+        cargarRecibos();
+        cargarEstadisticas();
+        
+        // Limpiar selección
+        archivosMasivo = [];
+        fileInputMasivo.value = '';
+        actualizarContadorMasivo();
+        
+    } catch (error) {
+        console.error('Error:', error);
+        mostrarToast('Error al subir los archivos', 'error');
+    }
+    
+    btnSubirMasivo.innerHTML = '<span>📦</span> Subir Todos los Recibos';
+    btnSubirMasivo.disabled = true;
+}
+
+function mostrarResultadosMasivo(resultado) {
+    const container = document.getElementById('resultadosMasivo');
+    const resumen = document.getElementById('resumenMasivo');
+    const detalle = document.getElementById('detalleMasivo');
+    
+    container.style.display = 'block';
+    
+    const exitosos = resultado.exitosos.length;
+    const errores = resultado.errores.length;
+    const total = resultado.total;
+    
+    // Resumen
+    if (errores === 0) {
+        resumen.style.background = '#d1fae5';
+        resumen.style.color = '#065f46';
+        resumen.innerHTML = `✅ <strong>${exitosos}/${total}</strong> recibos subidos exitosamente`;
+        mostrarToast(`${exitosos} recibos subidos correctamente`, 'success');
+    } else if (exitosos === 0) {
+        resumen.style.background = '#fee2e2';
+        resumen.style.color = '#991b1b';
+        resumen.innerHTML = `❌ <strong>Error:</strong> No se pudo subir ningún recibo (${errores} errores)`;
+        mostrarToast('Error al subir los recibos', 'error');
+    } else {
+        resumen.style.background = '#fef3c7';
+        resumen.style.color = '#92400e';
+        resumen.innerHTML = `⚠️ <strong>${exitosos}/${total}</strong> subidos, <strong>${errores}</strong> con errores`;
+        mostrarToast(`${exitosos} recibos subidos, ${errores} con errores`, 'warning');
+    }
+    
+    // Detalle
+    let detalleHTML = '';
+    
+    if (exitosos > 0) {
+        detalleHTML += '<div style="margin-bottom: 10px;"><strong style="color: #059669;">✓ Exitosos:</strong></div>';
+        resultado.exitosos.forEach(item => {
+            detalleHTML += `<div style="padding: 4px 8px; background: #ecfdf5; border-radius: 4px; margin-bottom: 4px;">
+                📄 ${item.archivo} → <strong>${item.empleado}</strong> (${item.periodo})
+            </div>`;
+        });
+    }
+    
+    if (errores > 0) {
+        detalleHTML += '<div style="margin: 10px 0;"><strong style="color: #dc2626;">✗ Errores:</strong></div>';
+        resultado.errores.forEach(item => {
+            detalleHTML += `<div style="padding: 4px 8px; background: #fef2f2; border-radius: 4px; margin-bottom: 4px;">
+                📄 ${item.archivo}: <span style="color: #991b1b;">${item.error}</span>
+            </div>`;
+        });
+    }
+    
+    detalle.innerHTML = detalleHTML;
 }
 
 function mostrarToast(mensaje, tipo) {

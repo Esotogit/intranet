@@ -556,3 +556,145 @@ def enviar_notificacion_recibo_nomina(
         asunto=asunto,
         contenido_html=contenido_html
     )
+
+
+def enviar_notificacion_vacaciones(
+    empleado: dict,
+    vacacion: dict,
+    aprobada: bool = True
+) -> dict:
+    """
+    Envía notificación al empleado cuando su solicitud de vacaciones
+    es aprobada o rechazada.
+    """
+    nombre = empleado.get('nombre', '')
+    apellidos = empleado.get('apellidos', '')
+    email = empleado.get('email', '')
+    
+    if not email:
+        return {"success": False, "message": "Empleado sin email"}
+    
+    nombre_completo = f"{nombre} {apellidos}".strip()
+    
+    # Datos de la solicitud
+    fecha_inicio = vacacion.get('fecha_inicio', '')
+    fecha_fin = vacacion.get('fecha_fin', '')
+    dias_solicitados = vacacion.get('dias_solicitados', 0)
+    dias_especificos = vacacion.get('dias_especificos', [])
+    comentario = vacacion.get('comentario_admin', '')
+    
+    # Determinar si mostrar días específicos o rango
+    if dias_especificos and len(dias_especificos) > 0:
+        dias_ordenados = sorted(dias_especificos)
+        fechas_html = "<br>".join([f"📅 {d}" for d in dias_ordenados])
+    else:
+        fechas_html = f"📅 Del {fecha_inicio} al {fecha_fin}"
+    
+    if aprobada:
+        asunto = f"✅ Vacaciones Aprobadas - {dias_solicitados} días"
+        estado_color = "#10b981"
+        estado_bg = "#d1fae5"
+        estado_texto = "APROBADA"
+        estado_icono = "✅"
+        mensaje_principal = "¡Tu solicitud de vacaciones ha sido aprobada!"
+        mensaje_secundario = "Ya puedes disfrutar de tus días de descanso en las fechas solicitadas."
+    else:
+        asunto = f"❌ Vacaciones Rechazadas"
+        estado_color = "#ef4444"
+        estado_bg = "#fee2e2"
+        estado_texto = "RECHAZADA"
+        estado_icono = "❌"
+        mensaje_principal = "Tu solicitud de vacaciones no fue aprobada"
+        mensaje_secundario = "Por favor revisa los comentarios y contacta a Recursos Humanos si tienes dudas."
+    
+    # Sección de comentario si existe
+    comentario_html = ""
+    if comentario:
+        comentario_html = f"""
+        <div style="background: #f8fafc; border-left: 4px solid {estado_color}; padding: 12px 16px; margin: 20px 0; border-radius: 0 8px 8px 0;">
+            <p style="margin: 0; font-size: 12px; color: #64748b; font-weight: 600;">COMENTARIO DE ADMINISTRACIÓN:</p>
+            <p style="margin: 8px 0 0 0; color: #334155;">{comentario}</p>
+        </div>
+        """
+    
+    contenido_html = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="UTF-8">
+    </head>
+    <body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f3f4f6;">
+        <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+            <div style="background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.08);">
+                
+                <!-- Header -->
+                <div style="background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%); padding: 30px; text-align: center;">
+                    <h1 style="color: white; margin: 0; font-size: 24px;">{estado_icono} Solicitud de Vacaciones</h1>
+                    <p style="color: rgba(255,255,255,0.9); margin: 8px 0 0 0; font-size: 14px;">{settings.company_name}</p>
+                </div>
+                
+                <!-- Content -->
+                <div style="padding: 30px;">
+                    <p style="font-size: 16px; color: #333; margin-bottom: 5px;">Hola <strong>{nombre}</strong>,</p>
+                    <p style="font-size: 15px; color: #555; line-height: 1.6;">{mensaje_principal}</p>
+                    
+                    <!-- Estado Badge -->
+                    <div style="text-align: center; margin: 25px 0;">
+                        <span style="display: inline-block; background: {estado_bg}; color: {estado_color}; padding: 12px 30px; border-radius: 25px; font-weight: 700; font-size: 16px;">
+                            {estado_icono} {estado_texto}
+                        </span>
+                    </div>
+                    
+                    <!-- Detalle de la solicitud -->
+                    <div style="background: #f8fafc; border-radius: 10px; padding: 20px; margin: 20px 0;">
+                        <h3 style="margin: 0 0 15px 0; font-size: 14px; color: #64748b; text-transform: uppercase;">Detalle de la Solicitud</h3>
+                        
+                        <table style="width: 100%; border-collapse: collapse;">
+                            <tr>
+                                <td style="padding: 8px 0; color: #64748b; font-size: 13px; width: 40%;">Días solicitados:</td>
+                                <td style="padding: 8px 0; color: #1e293b; font-weight: 600; font-size: 14px;">{dias_solicitados} días</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 8px 0; color: #64748b; font-size: 13px; vertical-align: top;">Fechas:</td>
+                                <td style="padding: 8px 0; color: #1e293b; font-size: 14px;">{fechas_html}</td>
+                            </tr>
+                        </table>
+                    </div>
+                    
+                    {comentario_html}
+                    
+                    <p style="font-size: 13px; color: #888; line-height: 1.6;">{mensaje_secundario}</p>
+                    
+                    <!-- Botón -->
+                    <div style="text-align: center; margin: 25px 0;">
+                        <a href="{settings.app_url}/vacaciones" 
+                           style="background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+                                  color: white;
+                                  padding: 14px 35px;
+                                  text-decoration: none;
+                                  border-radius: 8px;
+                                  font-weight: 600;
+                                  font-size: 15px;
+                                  display: inline-block;">
+                            Ver Mis Vacaciones
+                        </a>
+                    </div>
+                    
+                    <hr style="border: none; border-top: 1px solid #eee; margin: 25px 0;">
+                    
+                    <p style="font-size: 13px; color: #888; margin: 0;">
+                        Saludos,<br>
+                        <strong style="color: #0284c7;">{settings.company_name}</strong>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </body>
+    </html>
+    """
+    
+    return enviar_correo(
+        destinatario=email,
+        asunto=asunto,
+        contenido_html=contenido_html
+    )

@@ -895,22 +895,20 @@ def generar_formato_vacaciones(
     # FIRMAS (con firma digital si existe)
     # ========================================
     firma_url = empleado.get('firma_url')
-    firma_imagen = None
-    firma_temp_path = None
+    firma_empleado_cell = '_' * 30  # Default sin firma
     
     if firma_url:
-        firma_temp_path = descargar_imagen_firma(firma_url)
-        if firma_temp_path:
-            try:
-                firma_imagen = Image(firma_temp_path, width=1.2*inch, height=0.5*inch)
-            except:
-                firma_imagen = None
-    
-    # Celda de firma del empleado
-    if firma_imagen:
-        firma_empleado_cell = firma_imagen
-    else:
-        firma_empleado_cell = '_' * 30
+        try:
+            # Descargar imagen directamente a memoria
+            response = requests.get(firma_url, timeout=10)
+            if response.status_code == 200:
+                from io import BytesIO as FirmaBuffer
+                firma_bytes = FirmaBuffer(response.content)
+                firma_imagen = Image(firma_bytes, width=1.2*inch, height=0.5*inch)
+                firma_empleado_cell = firma_imagen
+        except Exception as e:
+            print(f"[ERROR] Cargando firma en vacaciones: {e}")
+            firma_empleado_cell = '_' * 30
     
     firma_data = [
         [firma_empleado_cell, '', '_' * 30],
@@ -929,13 +927,6 @@ def generar_formato_vacaciones(
         ('FONTNAME', (2, 1), (2, 1), 'Helvetica-Bold'),
     ]))
     elements.append(firma_table)
-    
-    # Limpiar archivo temporal de firma
-    if firma_temp_path and os.path.exists(firma_temp_path):
-        try:
-            os.unlink(firma_temp_path)
-        except:
-            pass
     
     elements.append(Spacer(1, 0.2*inch))
     
@@ -980,5 +971,6 @@ Solicita tus vacaciones y prográmalas con un mes de anticipación."""
     ))
     
     doc.build(elements)
+    
     buffer.seek(0)
     return buffer

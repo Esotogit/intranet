@@ -771,17 +771,26 @@
             const response = await fetch('/api/empleados/me');
             if (response.ok) {
                 const data = await response.json();
+                console.log('Perfil cargado:', data);
                 // Usar nombre_completo si existe, sino combinar nombre y apellidos
-                const nombreMostrar = data.nombre_completo || data.nombre || 'Usuario';
-                document.getElementById('userName').textContent = nombreMostrar;
-                document.getElementById('diasVacaciones').textContent = data.dias_vacaciones || 0;
-                document.getElementById('vacacionesDisponibles').textContent = data.dias_vacaciones || 0;
+                const nombreMostrar = (data.nombre_completo || data.nombre || 'Usuario').toUpperCase();
+                
+                const userNameEl = document.getElementById('userName');
+                if (userNameEl) userNameEl.textContent = nombreMostrar;
+                
+                const diasVacacionesEl = document.getElementById('diasVacaciones');
+                if (diasVacacionesEl) diasVacacionesEl.textContent = data.dias_vacaciones || 0;
+                
+                const vacacionesDisponiblesEl = document.getElementById('vacacionesDisponibles');
+                if (vacacionesDisponiblesEl) vacacionesDisponiblesEl.textContent = data.dias_vacaciones || 0;
                 
                 const greetingName = document.getElementById('greetingName');
                 if (greetingName) greetingName.textContent = nombreMostrar;
+            } else {
+                console.error('Error al cargar perfil:', response.status);
             }
         } catch (error) {
-            console.error('Error:', error);
+            console.error('Error en cargarPerfil:', error);
         }
     }
     

@@ -899,12 +899,58 @@
                 
                 <div class="form-row">
                     <div class="form-group">
-                        <label class="form-label">Correo electrónico <span class="required">*</span></label>
+                        <label class="form-label">Correo Empresa <span class="required">*</span></label>
                         <input type="email" id="email" class="form-input" required placeholder="correo@empresa.com">
                     </div>
                     <div class="form-group" id="passwordGroup">
                         <label class="form-label">Contraseña <span class="required">*</span></label>
                         <input type="password" id="password" class="form-input" placeholder="Mínimo 6 caracteres">
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Correo Personal</label>
+                        <input type="email" id="correo_personal" class="form-input" placeholder="correo@personal.com">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Teléfono Personal</label>
+                        <input type="tel" id="telefono_personal" class="form-input" placeholder="55 1234 5678">
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Número de empleado</label>
+                        <input type="text" id="numero_empleado" class="form-input" placeholder="Ej: 356">
+                        <small class="form-help">Usado para identificar recibos de nómina</small>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Fecha de ingreso <span class="required">*</span></label>
+                        <input type="date" id="fecha_ingreso" class="form-input" required>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">R.F.C.</label>
+                        <input type="text" id="rfc" class="form-input" placeholder="XXXX000000XXX" maxlength="13" style="text-transform: uppercase;">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">CURP</label>
+                        <input type="text" id="curp" class="form-input" placeholder="XXXX000000XXXXXX00" maxlength="18" style="text-transform: uppercase;">
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">NSS</label>
+                        <input type="text" id="nss" class="form-input" placeholder="00000000000" maxlength="11">
+                        <small class="form-help">Número de Seguro Social (IMSS)</small>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Fecha de Baja</label>
+                        <input type="date" id="fecha_baja" class="form-input">
                     </div>
                 </div>
                 
@@ -931,16 +977,12 @@
                         </select>
                     </div>
                     <div class="form-group">
-                        <label class="form-label">Fecha de ingreso <span class="required">*</span></label>
-                        <input type="date" id="fecha_ingreso" class="form-input" required>
+                        <label class="form-label">Días de vacaciones</label>
+                        <input type="number" id="dias_vacaciones" class="form-input" value="0" min="0" step="0.5">
                     </div>
                 </div>
                 
                 <div class="form-row">
-                    <div class="form-group">
-                        <label class="form-label">Días de vacaciones</label>
-                        <input type="number" id="dias_vacaciones" class="form-input" value="0" min="0" step="0.5">
-                    </div>
                     <div class="form-group">
                         <label class="form-label">Rol de acceso</label>
                         <select id="rol" class="form-select">
@@ -948,7 +990,9 @@
                             <option value="inventario">📦 Inventario (gestión de equipos)</option>
                             <option value="admin">👑 Administrador (acceso total)</option>
                         </select>
-                        <div class="form-check" id="activoGroup" style="display: none; margin-top: 10px;">
+                    </div>
+                    <div class="form-group">
+                        <div class="form-check" id="activoGroup" style="display: none; margin-top: 30px;">
                             <input type="checkbox" id="activo" checked>
                             <label for="activo">Empleado activo</label>
                         </div>
@@ -1234,6 +1278,14 @@ function cerrarModal() {
     // Limpiar campos de contraseña
     document.getElementById('nuevaPassword').value = '';
     document.getElementById('confirmarPassword').value = '';
+    document.getElementById('numero_empleado').value = '';
+    // Limpiar nuevos campos
+    document.getElementById('correo_personal').value = '';
+    document.getElementById('telefono_personal').value = '';
+    document.getElementById('rfc').value = '';
+    document.getElementById('nss').value = '';
+    document.getElementById('curp').value = '';
+    document.getElementById('fecha_baja').value = '';
 }
 
 function editarEmpleado(id) {
@@ -1261,10 +1313,19 @@ function editarEmpleado(id) {
     document.getElementById('supervisor_id').value = supervisor?.id || '';
     document.getElementById('proyecto_id').value = proyecto?.id || '';
     document.getElementById('fecha_ingreso').value = emp.fecha_ingreso || '';
+    document.getElementById('numero_empleado').value = emp.numero_empleado || '';
     document.getElementById('dias_vacaciones').value = emp.dias_vacaciones || 0;
     document.getElementById('rol').value = emp.rol || (emp.es_admin ? 'admin' : 'usuario');
     document.getElementById('activo').checked = emp.activo;
     document.getElementById('activoGroup').style.display = 'block';
+    
+    // Nuevos campos
+    document.getElementById('correo_personal').value = emp.correo_personal || '';
+    document.getElementById('telefono_personal').value = emp.telefono_personal || '';
+    document.getElementById('rfc').value = emp.rfc || '';
+    document.getElementById('nss').value = emp.nss || '';
+    document.getElementById('curp').value = emp.curp || '';
+    document.getElementById('fecha_baja').value = emp.fecha_baja || '';
     
     document.getElementById('modalEmpleado').classList.add('show');
 }
@@ -1311,13 +1372,21 @@ async function guardarEmpleado() {
             const data = {
                 nombre: nombre,
                 apellidos: apellidos,
+                numero_empleado: document.getElementById('numero_empleado').value.trim() || null,
                 puesto_id: document.getElementById('puesto_id').value || null,
                 supervisor_id: document.getElementById('supervisor_id').value || null,
                 proyecto_id: document.getElementById('proyecto_id').value || null,
                 dias_vacaciones: parseFloat(document.getElementById('dias_vacaciones').value) || 0,
                 rol: rol,
                 es_admin: rol === 'admin',
-                activo: document.getElementById('activo').checked
+                activo: document.getElementById('activo').checked,
+                // Nuevos campos
+                correo_personal: document.getElementById('correo_personal').value.trim() || null,
+                telefono_personal: document.getElementById('telefono_personal').value.trim() || null,
+                rfc: document.getElementById('rfc').value.trim().toUpperCase() || null,
+                nss: document.getElementById('nss').value.trim() || null,
+                curp: document.getElementById('curp').value.trim().toUpperCase() || null,
+                fecha_baja: document.getElementById('fecha_baja').value || null
             };
             
             const response = await fetch(`/api/empleados/${id}`, {
@@ -1356,19 +1425,28 @@ async function guardarEmpleado() {
             const supervisorId = document.getElementById('supervisor_id').value;
             const proyectoId = document.getElementById('proyecto_id').value;
             const fechaIngreso = document.getElementById('fecha_ingreso').value;
+            const numeroEmpleado = document.getElementById('numero_empleado').value.trim();
             
             const data = {
                 email: email,
                 password: password,
                 nombre: nombre,
                 apellidos: apellidos,
+                numero_empleado: numeroEmpleado || null,
                 puesto_id: puestoId ? parseInt(puestoId) : null,
                 supervisor_id: supervisorId ? parseInt(supervisorId) : null,
                 proyecto_id: proyectoId ? parseInt(proyectoId) : null,
                 fecha_ingreso: fechaIngreso || null,
                 dias_vacaciones: parseFloat(document.getElementById('dias_vacaciones').value) || 0,
                 rol: document.getElementById('rol').value,
-                es_admin: document.getElementById('rol').value === 'admin'
+                es_admin: document.getElementById('rol').value === 'admin',
+                // Nuevos campos
+                correo_personal: document.getElementById('correo_personal').value.trim() || null,
+                telefono_personal: document.getElementById('telefono_personal').value.trim() || null,
+                rfc: document.getElementById('rfc').value.trim().toUpperCase() || null,
+                nss: document.getElementById('nss').value.trim() || null,
+                curp: document.getElementById('curp').value.trim().toUpperCase() || null,
+                fecha_baja: document.getElementById('fecha_baja').value || null
             };
             
             console.log('Enviando datos:', JSON.stringify(data, null, 2));

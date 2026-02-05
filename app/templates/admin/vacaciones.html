@@ -132,6 +132,30 @@
         font-size: 11px;
     }
     
+    .fechas-especificas {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+    }
+    
+    .fecha-chip {
+        display: inline-block;
+        padding: 3px 8px;
+        background: #f0fdf4;
+        color: #166534;
+        border-radius: 12px;
+        font-size: 10px;
+        font-weight: 500;
+        border: 1px solid #bbf7d0;
+    }
+    
+    .fecha-chip.more {
+        background: #fef3c7;
+        color: #92400e;
+        border-color: #fcd34d;
+        cursor: help;
+    }
+    
     .dias-badge {
         display: inline-flex;
         align-items: center;
@@ -219,6 +243,101 @@
         margin-bottom: 16px;
         opacity: 0.5;
     }
+    
+    /* Filtros adicionales */
+    .filters-row {
+        display: flex;
+        gap: 16px;
+        margin-bottom: 16px;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+    
+    .filter-group {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .filter-group label {
+        font-size: 13px;
+        color: var(--text-secondary);
+        font-weight: 500;
+    }
+    
+    .filter-group select {
+        padding: 8px 12px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        font-size: 13px;
+        background: white;
+        min-width: 120px;
+    }
+    
+    /* Acordeón de fechas */
+    .fechas-acordeon {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+    
+    .fechas-principales {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+        align-items: center;
+    }
+    
+    .fecha-chip {
+        display: inline-block;
+        padding: 4px 10px;
+        background: #f0fdf4;
+        color: #166534;
+        border-radius: 12px;
+        font-size: 11px;
+        font-weight: 500;
+        border: 1px solid #bbf7d0;
+    }
+    
+    .btn-expandir {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 4px 10px;
+        background: #fef3c7;
+        color: #92400e;
+        border: 1px solid #fcd34d;
+        border-radius: 12px;
+        font-size: 11px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    
+    .btn-expandir:hover {
+        background: #fde68a;
+    }
+    
+    .btn-expandir .arrow {
+        transition: transform 0.2s;
+    }
+    
+    .btn-expandir.expanded .arrow {
+        transform: rotate(180deg);
+    }
+    
+    .fechas-extra {
+        display: none;
+        flex-wrap: wrap;
+        gap: 4px;
+        margin-top: 6px;
+        padding-top: 6px;
+        border-top: 1px dashed #e5e7eb;
+    }
+    
+    .fechas-extra.show {
+        display: flex;
+    }
 </style>
 {% endblock %}
 
@@ -236,6 +355,34 @@
     <button class="tab-btn" onclick="filtrar('todas', this)">📋 Todas</button>
 </div>
 
+<!-- Filtros de fecha -->
+<div class="filters-row">
+    <div class="filter-group">
+        <label>📅 Mes:</label>
+        <select id="filtroMes" onchange="cargarSolicitudes()">
+            <option value="">Todos</option>
+            <option value="1">Enero</option>
+            <option value="2">Febrero</option>
+            <option value="3">Marzo</option>
+            <option value="4">Abril</option>
+            <option value="5">Mayo</option>
+            <option value="6">Junio</option>
+            <option value="7">Julio</option>
+            <option value="8">Agosto</option>
+            <option value="9">Septiembre</option>
+            <option value="10">Octubre</option>
+            <option value="11">Noviembre</option>
+            <option value="12">Diciembre</option>
+        </select>
+    </div>
+    <div class="filter-group">
+        <label>📆 Año:</label>
+        <select id="filtroAnio" onchange="cargarSolicitudes()">
+            <option value="">Todos</option>
+        </select>
+    </div>
+</div>
+
 <!-- Lista de solicitudes -->
 <div class="vacaciones-card">
     <div id="solicitudesLista">
@@ -247,6 +394,20 @@
 {% block extra_js %}
 <script>
 let filtroActual = 'pendiente';
+let todasLasSolicitudes = [];
+
+// Inicializar años en el select
+function inicializarFiltros() {
+    const selectAnio = document.getElementById('filtroAnio');
+    const anioActual = new Date().getFullYear();
+    
+    for (let i = anioActual; i >= anioActual - 3; i--) {
+        const option = document.createElement('option');
+        option.value = i;
+        option.textContent = i;
+        selectAnio.appendChild(option);
+    }
+}
 
 async function cargarSolicitudes() {
     const container = document.getElementById('solicitudesLista');
@@ -260,9 +421,12 @@ async function cargarSolicitudes() {
         
         const response = await fetch(url);
         if (response.ok) {
-            const solicitudes = await response.json();
+            todasLasSolicitudes = await response.json();
             
-            if (solicitudes.length === 0) {
+            // Aplicar filtros de fecha
+            let solicitudesFiltradas = filtrarPorFecha(todasLasSolicitudes);
+            
+            if (solicitudesFiltradas.length === 0) {
                 container.innerHTML = `
                     <div class="empty-state">
                         <div class="empty-state-icon">🏖️</div>
@@ -287,12 +451,49 @@ async function cargarSolicitudes() {
                     <tbody>
             `;
             
-            solicitudes.forEach(sol => {
+            solicitudesFiltradas.forEach((sol, index) => {
                 const nombre = sol.empleado ? sol.empleado.nombre : '';
                 const apellidos = sol.empleado ? sol.empleado.apellidos : '';
                 const initials = (nombre[0] || '') + (apellidos[0] || '');
                 
                 const statusIcons = { 'pendiente': '⏳', 'aprobada': '✅', 'rechazada': '❌' };
+                
+                // Formatear fechas con acordeón
+                let fechasHtml = '';
+                if (sol.dias_especificos && sol.dias_especificos.length > 0) {
+                    const diasOrdenados = [...sol.dias_especificos].sort();
+                    
+                    if (diasOrdenados.length <= 2) {
+                        // Pocos días - mostrar todos
+                        fechasHtml = `<div class="fechas-acordeon">
+                            <div class="fechas-principales">
+                                ${diasOrdenados.map(d => `<span class="fecha-chip">📅 ${d}</span>`).join('')}
+                            </div>
+                        </div>`;
+                    } else {
+                        // Muchos días - acordeón
+                        const primerasFechas = diasOrdenados.slice(0, 2);
+                        const restantes = diasOrdenados.slice(2);
+                        
+                        fechasHtml = `<div class="fechas-acordeon">
+                            <div class="fechas-principales">
+                                ${primerasFechas.map(d => `<span class="fecha-chip">📅 ${d}</span>`).join('')}
+                                <button class="btn-expandir" onclick="toggleFechas(this, ${index})">
+                                    +${restantes.length} más <span class="arrow">▼</span>
+                                </button>
+                            </div>
+                            <div class="fechas-extra" id="fechas-extra-${index}">
+                                ${restantes.map(d => `<span class="fecha-chip">📅 ${d}</span>`).join('')}
+                            </div>
+                        </div>`;
+                    }
+                } else {
+                    // Rango continuo
+                    fechasHtml = `<div class="fecha-rango">
+                        <span>📅 ${sol.fecha_inicio}</span>
+                        <span>➜ ${sol.fecha_fin}</span>
+                    </div>`;
+                }
                 
                 html += `
                     <tr>
@@ -302,12 +503,7 @@ async function cargarSolicitudes() {
                                 <span class="empleado-nombre">${nombre} ${apellidos}</span>
                             </div>
                         </td>
-                        <td>
-                            <div class="fecha-rango">
-                                <span>📅 ${sol.fecha_inicio}</span>
-                                <span>➜ ${sol.fecha_fin}</span>
-                            </div>
-                        </td>
+                        <td>${fechasHtml}</td>
                         <td><span class="dias-badge">${sol.dias_solicitados} días</span></td>
                         <td>${sol.motivo || '-'}</td>
                         <td><span class="status-badge status-${sol.estatus}">${statusIcons[sol.estatus]} ${sol.estatus}</span></td>
@@ -361,6 +557,52 @@ async function rechazar(id) {
     }
 }
 
-document.addEventListener('DOMContentLoaded', cargarSolicitudes);
+// Filtrar solicitudes por mes y año
+function filtrarPorFecha(solicitudes) {
+    const mes = document.getElementById('filtroMes').value;
+    const anio = document.getElementById('filtroAnio').value;
+    
+    if (!mes && !anio) return solicitudes;
+    
+    return solicitudes.filter(sol => {
+        // Verificar por días específicos o por fecha_inicio
+        let fechasAVerificar = [];
+        
+        if (sol.dias_especificos && sol.dias_especificos.length > 0) {
+            fechasAVerificar = sol.dias_especificos;
+        } else if (sol.fecha_inicio) {
+            fechasAVerificar = [sol.fecha_inicio];
+        }
+        
+        return fechasAVerificar.some(fecha => {
+            const [y, m] = fecha.split('-');
+            const coincideMes = !mes || parseInt(m) === parseInt(mes);
+            const coincideAnio = !anio || parseInt(y) === parseInt(anio);
+            return coincideMes && coincideAnio;
+        });
+    });
+}
+
+// Toggle acordeón de fechas
+function toggleFechas(btn, index) {
+    const extraDiv = document.getElementById(`fechas-extra-${index}`);
+    if (extraDiv) {
+        extraDiv.classList.toggle('show');
+        btn.classList.toggle('expanded');
+        
+        // Cambiar texto del botón
+        const numExtra = extraDiv.querySelectorAll('.fecha-chip').length;
+        if (extraDiv.classList.contains('show')) {
+            btn.innerHTML = `Ocultar <span class="arrow">▲</span>`;
+        } else {
+            btn.innerHTML = `+${numExtra} más <span class="arrow">▼</span>`;
+        }
+    }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    inicializarFiltros();
+    cargarSolicitudes();
+});
 </script>
 {% endblock %}

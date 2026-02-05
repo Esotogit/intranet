@@ -13,6 +13,7 @@ from app.models import (
 )
 from app.auth import get_current_user, get_current_admin
 from app.services.pdf_generator import generar_formato_vacaciones
+from app.services.email_service import enviar_notificacion_vacaciones
 
 router = APIRouter(prefix="/api/vacaciones", tags=["Vacaciones"])
 
@@ -140,7 +141,21 @@ async def aprobar_vacaciones(
             detail="Solicitud no encontrada o ya fue procesada"
         )
     
-    return result.data[0]
+    vacacion = result.data[0]
+    
+    # Enviar notificación por correo al empleado
+    try:
+        empleado = supabase.table("v_empleados_completo").select("*").eq("id", vacacion["empleado_id"]).execute()
+        if empleado.data:
+            enviar_notificacion_vacaciones(
+                empleado=empleado.data[0],
+                vacacion=vacacion,
+                aprobada=True
+            )
+    except Exception as e:
+        print(f"[WARNING] No se pudo enviar notificación de vacaciones: {str(e)}")
+    
+    return vacacion
 
 
 @router.patch("/{vacacion_id}/rechazar", response_model=Vacaciones)
@@ -163,7 +178,21 @@ async def rechazar_vacaciones(
             detail="Solicitud no encontrada o ya fue procesada"
         )
     
-    return result.data[0]
+    vacacion = result.data[0]
+    
+    # Enviar notificación por correo al empleado
+    try:
+        empleado = supabase.table("v_empleados_completo").select("*").eq("id", vacacion["empleado_id"]).execute()
+        if empleado.data:
+            enviar_notificacion_vacaciones(
+                empleado=empleado.data[0],
+                vacacion=vacacion,
+                aprobada=False
+            )
+    except Exception as e:
+        print(f"[WARNING] No se pudo enviar notificación de vacaciones: {str(e)}")
+    
+    return vacacion
 
 
 @router.delete("/{vacacion_id}")

@@ -94,6 +94,7 @@ class EmpleadoBase(BaseModel):
     email: EmailStr
     nombre: str
     apellidos: str
+    numero_empleado: Optional[str] = None
     puesto_id: Optional[int] = None
     supervisor_id: Optional[int] = None
     proyecto_id: Optional[int] = None
@@ -101,6 +102,13 @@ class EmpleadoBase(BaseModel):
     dias_vacaciones: float = 0  # Cambiado de Decimal a float
     rol: str = 'usuario'  # 'admin', 'inventario', 'usuario'
     es_admin: bool = False
+    # Nuevos campos
+    correo_personal: Optional[str] = None
+    telefono_personal: Optional[str] = None
+    rfc: Optional[str] = None
+    nss: Optional[str] = None
+    curp: Optional[str] = None
+    fecha_baja: Optional[str] = None
 
 
 class EmpleadoCreate(EmpleadoBase):
@@ -110,6 +118,7 @@ class EmpleadoCreate(EmpleadoBase):
 class EmpleadoUpdate(BaseModel):
     nombre: Optional[str] = None
     apellidos: Optional[str] = None
+    numero_empleado: Optional[str] = None
     puesto_id: Optional[int] = None
     supervisor_id: Optional[int] = None
     proyecto_id: Optional[int] = None
@@ -117,6 +126,13 @@ class EmpleadoUpdate(BaseModel):
     rol: Optional[str] = None
     es_admin: Optional[bool] = None
     activo: Optional[bool] = None
+    # Nuevos campos
+    correo_personal: Optional[str] = None
+    telefono_personal: Optional[str] = None
+    rfc: Optional[str] = None
+    nss: Optional[str] = None
+    curp: Optional[str] = None
+    fecha_baja: Optional[str] = None
 
 
 class Empleado(BaseModel):

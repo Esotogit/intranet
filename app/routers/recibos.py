@@ -297,3 +297,180 @@ async def estadisticas_recibos(
         "recibos_anio_actual": del_anio.count or 0,
         "recibos_mes_actual": del_mes.count or 0
     }
+
+
+@router.post("/subir-masivo")
+async def subir_recibos_masivo(
+    archivos: List[UploadFile] = File(...),
+    current_user: TokenData = Depends(get_current_admin)
+):
+    """
+    Subir múltiples recibos de nómina detectando automáticamente el empleado.
+    
+    Formato del nombre del archivo: RE_3107_Quincenal_2026_1_356_753.pdf
+    - RE: Fijo
+    - 3107: Fijo
+    - Quincenal: Fijo
+    - 2026: Año
+    - 1: Número de quincena (1-24)
+    - 356: Número de empleado
+    - 753: Otros dígitos (ignorados)
+    """
+    
+    resultados = {
+        "exitosos": [],
+        "errores": [],
+        "total": len(archivos)
+    }
+    
+    # Obtener todos los empleados con su numero_empleado
+    empleados_result = supabase.table("empleados").select("id, nombre, apellidos, email, numero_empleado").eq("activo", True).execute()
+    
+    # Crear diccionario para búsqueda rápida por numero_empleado
+    empleados_por_numero = {}
+    for emp in empleados_result.data:
+        if emp.get('numero_empleado'):
+            empleados_por_numero[emp['numero_empleado'].strip()] = emp
+    
+    admin_client = get_admin_client()
+    
+    for archivo in archivos:
+        nombre_archivo = archivo.filename
+        
+        try:
+            # Validar que sea PDF
+            if not nombre_archivo.lower().endswith('.pdf'):
+                resultados["errores"].append({
+                    "archivo": nombre_archivo,
+                    "error": "No es un archivo PDF"
+                })
+                continue
+            
+            # Parsear el nombre del archivo
+            # RE_3107_Quincenal_2026_1_356_753.pdf
+            nombre_sin_extension = nombre_archivo.rsplit('.', 1)[0]
+            partes = nombre_sin_extension.split('_')
+            
+            if len(partes) < 6:
+                resultados["errores"].append({
+                    "archivo": nombre_archivo,
+                    "error": "Formato de nombre inválido. Se esperan al menos 6 partes separadas por '_'"
+                })
+                continue
+            
+            # Extraer datos del nombre
+            anio = int(partes[3])  # Posición 4: año
+            numero_quincena = int(partes[4])  # Posición 5: número de quincena (1-24)
+            numero_empleado = partes[5]  # Posición 6: número de empleado
+            
+            # Calcular mes y período a partir del número de quincena
+            # Quincena 1 = 1ra de Enero, Quincena 2 = 2da de Enero
+            # Quincena 3 = 1ra de Febrero, etc.
+            mes = ((numero_quincena - 1) // 2) + 1
+            es_primera_quincena = (numero_quincena % 2) == 1
+            periodo = "1ra Quincena" if es_primera_quincena else "2da Quincena"
+            
+            # Validar mes
+            if mes < 1 or mes > 12:
+                resultados["errores"].append({
+                    "archivo": nombre_archivo,
+                    "error": f"Número de quincena inválido: {numero_quincena}. Debe estar entre 1 y 24"
+                })
+                continue
+            
+            # Buscar empleado por número
+            empleado = empleados_por_numero.get(numero_empleado)
+            
+            if not empleado:
+                resultados["errores"].append({
+                    "archivo": nombre_archivo,
+                    "error": f"No se encontró empleado con número: {numero_empleado}"
+                })
+                continue
+            
+            empleado_id = empleado['id']
+            
+            # Verificar si ya existe un recibo para este período
+            existing = admin_client.table("recibos_nomina").select("id").eq(
+                "empleado_id", empleado_id
+            ).eq("periodo", periodo).eq("mes", mes).eq("anio", anio).execute()
+            
+            if existing.data:
+                resultados["errores"].append({
+                    "archivo": nombre_archivo,
+                    "error": f"Ya existe recibo para {empleado['nombre']} {empleado['apellidos']} - {periodo} {mes}/{anio}"
+                })
+                continue
+            
+            # Leer contenido del archivo
+            contenido = await archivo.read()
+            
+            # Generar nombre único para Storage
+            periodo_limpio = periodo.replace(' ', '_').replace('ª', 'a')
+            storage_path = f"{empleado_id}/{anio}/{mes:02d}_{periodo_limpio}.pdf"
+            
+            # Subir a Supabase Storage (intentar eliminar si existe)
+            try:
+                admin_client.storage.from_("recibos").remove([storage_path])
+            except:
+                pass  # Si no existe, no pasa nada
+            
+            storage_response = admin_client.storage.from_("recibos").upload(
+                storage_path,
+                contenido,
+                {"content-type": "application/pdf"}
+            )
+            
+            # Obtener URL
+            archivo_url = admin_client.storage.from_("recibos").get_public_url(storage_path)
+            
+            # Guardar registro en la base de datos (usar admin_client para bypass RLS)
+            recibo_data = {
+                "empleado_id": empleado_id,
+                "periodo": periodo,
+                "mes": mes,
+                "anio": anio,
+                "archivo_url": archivo_url,
+                "archivo_nombre": nombre_archivo,
+                "subido_por": current_user.user_id,
+                "notas": f"Carga masiva - {datetime.now().strftime('%Y-%m-%d %H:%M')}"
+            }
+            
+            result = admin_client.table("recibos_nomina").insert(recibo_data).execute()
+            
+            if result.data:
+                resultados["exitosos"].append({
+                    "archivo": nombre_archivo,
+                    "empleado": f"{empleado['nombre']} {empleado['apellidos']}",
+                    "numero_empleado": numero_empleado,
+                    "periodo": f"{periodo} - {mes}/{anio}"
+                })
+                
+                # Enviar notificación por correo (sin bloquear si falla)
+                try:
+                    enviar_notificacion_recibo_nomina(
+                        empleado=empleado,
+                        periodo=periodo,
+                        mes=mes,
+                        anio=anio
+                    )
+                except Exception as email_error:
+                    print(f"[WARNING] No se pudo enviar notificación a {empleado['email']}: {str(email_error)}")
+            else:
+                resultados["errores"].append({
+                    "archivo": nombre_archivo,
+                    "error": "Error al guardar en base de datos"
+                })
+                
+        except ValueError as ve:
+            resultados["errores"].append({
+                "archivo": nombre_archivo,
+                "error": f"Error al parsear nombre: {str(ve)}"
+            })
+        except Exception as e:
+            resultados["errores"].append({
+                "archivo": nombre_archivo,
+                "error": str(e)
+            })
+    
+    return resultados
