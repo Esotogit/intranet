@@ -9,7 +9,7 @@ from app.config import get_settings
 from app.scheduler import iniciar_scheduler, detener_scheduler
 
 # Importar routers
-from app.routers import auth, empleados, vacaciones, actividades, catalogos, reportes, pages, inventario, anuncios, recibos
+from app.routers import auth, empleados, vacaciones, actividades, catalogos, reportes, pages, inventario, anuncios, recibos, correos
 
 settings = get_settings()
 
@@ -69,6 +69,7 @@ app.include_router(reportes.router)
 app.include_router(inventario.router)
 app.include_router(anuncios.router)
 app.include_router(recibos.router)
+app.include_router(correos.router)
 
 # Registrar router de páginas HTML
 app.include_router(pages.router)

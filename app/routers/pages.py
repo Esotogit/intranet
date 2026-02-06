@@ -181,3 +181,14 @@ async def admin_recibos(request: Request, user: Optional[TokenData] = Depends(ge
         "request": request,
         "user": user
     })
+
+
+@router.get("/admin/correos")
+async def admin_correos(request: Request, user: Optional[TokenData] = Depends(get_optional_user)):
+    """Gestión de plantillas de correo"""
+    if not user or not user.es_admin:
+        return RedirectResponse(url="/login")
+    return templates.TemplateResponse("admin/correos.html", {
+        "request": request,
+        "user": user
+    })

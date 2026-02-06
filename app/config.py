@@ -11,7 +11,7 @@ class Settings(BaseSettings):
     app_env: str = "development"
     debug: bool = True
     secret_key: str = "cambiar-en-produccion"
-    APP_URL: str = "http://localhost:8000"
+    app_url: str = "http://localhost:8000"
     
     # Supabase
     supabase_url: str

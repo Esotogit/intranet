@@ -974,3 +974,356 @@ Solicita tus vacaciones y prográmalas con un mes de anticipación."""
     
     buffer.seek(0)
     return buffer
+
+
+def generar_responsiva_equipo(
+    empleado: dict,
+    equipo: dict,
+    datos_responsiva: dict,
+    nombre_entrega: str = "Nelson Rios Rengifo"
+) -> BytesIO:
+    """
+    Genera el PDF de responsiva de equipo de cómputo.
+    
+    Args:
+        empleado: Datos del empleado (nombre, apellidos, rfc, numero_empleado, puesto, cliente)
+        equipo: Datos del equipo (modelo, marca, numero_serie, tipo, ubicacion)
+        datos_responsiva: Datos adicionales (descripcion_equipo, procesador, pantalla, memoria_ram, 
+                         disco_duro, dvd_rw, sistema_operativo)
+        nombre_entrega: Nombre de quien entrega el equipo
+    """
+    buffer = BytesIO()
+    
+    # Configurar página carta
+    doc = SimpleDocTemplate(
+        buffer,
+        pagesize=letter,
+        rightMargin=0.6*inch,
+        leftMargin=0.6*inch,
+        topMargin=0.5*inch,
+        bottomMargin=0.5*inch
+    )
+    
+    elements = []
+    styles = getSampleStyleSheet()
+    
+    # Estilos personalizados
+    style_title = ParagraphStyle(
+        'TitleResponsiva',
+        parent=styles['Normal'],
+        fontSize=14,
+        fontName='Helvetica-Bold',
+        alignment=TA_LEFT,
+        spaceAfter=6,
+        letterSpacing=4
+    )
+    
+    style_company = ParagraphStyle(
+        'Company',
+        parent=styles['Normal'],
+        fontSize=10,
+        fontName='Helvetica-Bold',
+        alignment=TA_RIGHT
+    )
+    
+    style_normal = ParagraphStyle(
+        'NormalText',
+        parent=styles['Normal'],
+        fontSize=10,
+        fontName='Helvetica',
+        leading=14
+    )
+    
+    style_small = ParagraphStyle(
+        'SmallText',
+        parent=styles['Normal'],
+        fontSize=8,
+        fontName='Helvetica',
+        textColor=colors.gray
+    )
+    
+    style_bold = ParagraphStyle(
+        'BoldText',
+        parent=styles['Normal'],
+        fontSize=10,
+        fontName='Helvetica-Bold'
+    )
+    
+    style_center = ParagraphStyle(
+        'CenterText',
+        parent=styles['Normal'],
+        fontSize=10,
+        fontName='Helvetica',
+        alignment=TA_CENTER
+    )
+    
+    style_underline = ParagraphStyle(
+        'UnderlineText',
+        parent=styles['Normal'],
+        fontSize=10,
+        fontName='Helvetica-Bold',
+        underline=True
+    )
+    
+    # Datos del empleado
+    nombre_completo = f"{empleado.get('nombre', '')} {empleado.get('apellidos', '')}".strip()
+    rfc = empleado.get('rfc', '') or ''
+    numero_empleado = empleado.get('numero_empleado', '') or ''
+    puesto = empleado.get('puesto', '') or ''
+    cliente = empleado.get('cliente', '') or 'Jugos del Valle'
+    proyecto = empleado.get('proyecto', '') or ''
+    
+    # Datos del equipo
+    modelo = equipo.get('modelo', '') or ''
+    marca = equipo.get('marca', '') or ''
+    numero_serie = equipo.get('numero_serie', '') or ''
+    tipo_equipo = equipo.get('tipo', 'laptop').capitalize()
+    ubicacion = equipo.get('ubicacion', '') or ''
+    
+    # Datos de responsiva (capturados por admin)
+    descripcion = datos_responsiva.get('descripcion_equipo', 'Prestamo')
+    procesador = datos_responsiva.get('procesador', '')
+    pantalla = datos_responsiva.get('pantalla', '')
+    memoria_ram = datos_responsiva.get('memoria_ram', '')
+    disco_duro = datos_responsiva.get('disco_duro', '')
+    dvd_rw = datos_responsiva.get('dvd_rw', 'NO')
+    sistema_operativo = datos_responsiva.get('sistema_operativo', '')
+    
+    # Fecha actual
+    hoy = date.today()
+    fecha_str = f"{hoy.day:02d} {MESES_ES[hoy.month]} de {hoy.year}"
+    
+    # ========================================
+    # ENCABEZADO
+    # ========================================
+    # Logo y título en una tabla
+    logo_path = os.path.join(os.path.dirname(__file__), '..', 'static', 'img', 'logo_ids.png')
+    
+    header_data = [
+        [
+            Paragraph("R E S G U A R D O", style_title),
+            ''
+        ],
+        [
+            '',
+            Paragraph("<b>INFORMÁTICA Y DESARROLLO EN SISTEMAS, S.A. DE C.V</b>", style_company)
+        ]
+    ]
+    
+    # Intentar agregar logo
+    try:
+        if os.path.exists(logo_path):
+            logo = Image(logo_path, width=1.5*inch, height=0.5*inch)
+            header_data[0][1] = logo
+            header_data[1][1] = Paragraph("<b>INFORMÁTICA Y DESARROLLO EN SISTEMAS, S.A. DE C.V</b>", style_company)
+    except:
+        pass
+    
+    header_table = Table(header_data, colWidths=[3.5*inch, 3.5*inch])
+    header_table.setStyle(TableStyle([
+        ('ALIGN', (0, 0), (0, -1), 'LEFT'),
+        ('ALIGN', (1, 0), (1, -1), 'RIGHT'),
+        ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+    ]))
+    elements.append(header_table)
+    elements.append(Spacer(1, 0.3*inch))
+    
+    # ========================================
+    # FECHA
+    # ========================================
+    elements.append(Paragraph(f"<para align='right'>{fecha_str}</para>", style_normal))
+    elements.append(Spacer(1, 0.2*inch))
+    
+    # ========================================
+    # DATOS DEL EMPLEADO
+    # ========================================
+    # El que suscribe
+    elements.append(Paragraph(
+        f"El que suscribe: <u><b>{nombre_completo}</b></u>",
+        style_normal
+    ))
+    elements.append(Paragraph("<font size='7' color='gray'>(Nombre)</font>", 
+                             ParagraphStyle('SmallCenter', alignment=TA_CENTER, fontSize=7, textColor=colors.gray)))
+    elements.append(Spacer(1, 0.1*inch))
+    
+    # RFC y No. Empleado en una línea
+    elements.append(Paragraph(
+        f"con R.F.C. <u><b>{rfc}</b></u>   No. De Empleado <u><b>{numero_empleado}</b></u>",
+        style_normal
+    ))
+    elements.append(Spacer(1, 0.1*inch))
+    
+    # Puesto y Proyecto
+    puesto_proyecto_data = [
+        [
+            Paragraph(f"Puesto de: <u><b>{puesto}</b></u>", style_normal),
+            Paragraph(f"Proyecto <u><b>{proyecto}</b></u>", style_normal)
+        ],
+        [
+            Paragraph("<font size='7' color='gray'>(Indicar puesto y Nombramiento)</font>", style_small),
+            ''
+        ]
+    ]
+    puesto_table = Table(puesto_proyecto_data, colWidths=[4*inch, 3*inch])
+    puesto_table.setStyle(TableStyle([
+        ('ALIGN', (0, 0), (0, -1), 'LEFT'),
+        ('ALIGN', (1, 0), (1, -1), 'RIGHT'),
+        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+    ]))
+    elements.append(puesto_table)
+    elements.append(Spacer(1, 0.1*inch))
+    
+    # Adscrito a
+    elements.append(Paragraph(
+        f"adscrito a la: <u><b>{cliente}</b></u>",
+        style_normal
+    ))
+    elements.append(Paragraph(
+        "<font size='7' color='gray'>(Dirección/Subdirección/Departamento, Delegación, CCDI's)</font>",
+        style_small
+    ))
+    elements.append(Spacer(1, 0.1*inch))
+    
+    # Ubicación
+    elements.append(Paragraph(
+        f"Ubicación del lugar del equipo: <u><b>{ubicacion}</b></u>",
+        style_normal
+    ))
+    elements.append(Spacer(1, 0.2*inch))
+    
+    # ========================================
+    # DATOS DEL EQUIPO
+    # ========================================
+    # Descripción y Tipo
+    equipo_header = [
+        [
+            Paragraph(f"Para el resguardo de el siguiente equipo de cómputo", style_normal),
+            Paragraph(f"<u><b>{descripcion}</b></u>", style_bold),
+            Paragraph("Tipo:", style_normal),
+            Paragraph(f"<b>{tipo_equipo}</b>", style_bold)
+        ],
+        [
+            '',
+            Paragraph("<font size='7' color='gray'>(Descripción del equipo)</font>", style_small),
+            '',
+            Paragraph("<font size='7' color='gray'>(PC-Lap Top)</font>", style_small)
+        ]
+    ]
+    eq_header_table = Table(equipo_header, colWidths=[3.2*inch, 1.3*inch, 0.6*inch, 1.2*inch])
+    eq_header_table.setStyle(TableStyle([
+        ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+    ]))
+    elements.append(eq_header_table)
+    elements.append(Spacer(1, 0.1*inch))
+    
+    # Serie, Modelo, Marca
+    serie_data = [
+        [
+            Paragraph(f"y número de Serie: <u><b>{numero_serie}</b></u>", style_normal),
+            Paragraph(f"Modelo: <u><b>{modelo}</b></u>", style_normal),
+            Paragraph(f"Marca: <b>{marca}</b>", style_normal)
+        ]
+    ]
+    serie_table = Table(serie_data, colWidths=[2.8*inch, 2*inch, 1.5*inch])
+    serie_table.setStyle(TableStyle([
+        ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+    ]))
+    elements.append(serie_table)
+    elements.append(Spacer(1, 0.1*inch))
+    
+    # Procesador y Pantalla
+    proc_data = [
+        [
+            Paragraph(f"Procesador: <b>{procesador}</b>", style_normal),
+            Paragraph(f"Pantalla: <b>{pantalla}</b>", style_normal)
+        ]
+    ]
+    proc_table = Table(proc_data, colWidths=[4*inch, 2.5*inch])
+    proc_table.setStyle(TableStyle([
+        ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+    ]))
+    elements.append(proc_table)
+    elements.append(Spacer(1, 0.1*inch))
+    
+    # RAM, Disco, DVD
+    specs_data = [
+        [
+            Paragraph(f"Memoria Ram: <b>{memoria_ram}</b>", style_normal),
+            Paragraph(f"Disco Duro: <b>{disco_duro}</b>", style_normal),
+            Paragraph(f"DVD/RW: <b>{dvd_rw}</b>", style_normal)
+        ]
+    ]
+    specs_table = Table(specs_data, colWidths=[2.3*inch, 2.3*inch, 1.7*inch])
+    specs_table.setStyle(TableStyle([
+        ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+    ]))
+    elements.append(specs_table)
+    elements.append(Spacer(1, 0.1*inch))
+    
+    # Sistema Operativo
+    elements.append(Paragraph(f"Sistema Operativo: <b>{sistema_operativo}</b>", style_normal))
+    elements.append(Spacer(1, 0.4*inch))
+    
+    # ========================================
+    # TEXTO LEGAL
+    # ========================================
+    texto_legal = """Este equipo de computo y accesorios, le es asignado para uso exclusivo del proyecto en el cual este trabajando y 
+estara bajo su custodia y resguardo. Siendo responsabilidad del que suscribe cualquier daño físico, robo o perdida. 
+El costo que se genere, por compostura o por recuperacion del mismo, debera ser pagado al valor actual del equipo."""
+    
+    style_legal = ParagraphStyle(
+        'Legal',
+        parent=styles['Normal'],
+        fontSize=9,
+        fontName='Helvetica',
+        alignment=TA_CENTER,
+        leading=12
+    )
+    elements.append(Paragraph(texto_legal, style_legal))
+    elements.append(Spacer(1, 0.6*inch))
+    
+    # ========================================
+    # FIRMAS
+    # ========================================
+    firma_data = [
+        [
+            Paragraph("<b>Entrego</b>", style_center),
+            Paragraph("<b>Recibio</b>", style_center)
+        ],
+        [
+            '',
+            ''
+        ],
+        [
+            Paragraph("_" * 25, style_center),
+            Paragraph("_" * 25, style_center)
+        ],
+        [
+            Paragraph(f"<b>{nombre_entrega}</b>", style_center),
+            Paragraph(f"<b>{nombre_completo}</b>", style_center)
+        ]
+    ]
+    
+    firma_table = Table(firma_data, colWidths=[3.25*inch, 3.25*inch], rowHeights=[0.3*inch, 0.5*inch, 0.2*inch, 0.3*inch])
+    firma_table.setStyle(TableStyle([
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+    ]))
+    elements.append(firma_table)
+    elements.append(Spacer(1, 0.5*inch))
+    
+    # ========================================
+    # PIE DE PÁGINA
+    # ========================================
+    elements.append(Paragraph("_" * 95, ParagraphStyle('FooterLine', alignment=TA_CENTER, fontSize=6)))
+    elements.append(Paragraph(
+        "<font size='7'>Daniel Huacuja No 32 Col. Magisterial Vista Bella Tlalnepantla de Baz, Estado de Mexico C.P 54050. Tels.: 5359-4488 y 1663-0359</font>",
+        ParagraphStyle('FooterAddress', alignment=TA_CENTER, fontSize=7)
+    ))
+    
+    doc.build(elements)
+    
+    buffer.seek(0)
+    return buffer

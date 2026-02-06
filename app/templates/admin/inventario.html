@@ -775,6 +775,85 @@
     </div>
 </div>
 
+<!-- Modal Responsiva de Equipo -->
+<div class="modal-overlay" id="modalResponsiva">
+    <div class="modal" style="max-width: 600px;">
+        <div class="modal-header">
+            <h3>📋 Generar Responsiva de Equipo</h3>
+            <button class="modal-close" onclick="cerrarModalResponsiva()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <input type="hidden" id="responsivaEquipoId">
+            
+            <!-- Info del equipo y empleado -->
+            <div style="background: #f0fdf4; border-radius: 8px; padding: 12px; margin-bottom: 16px;">
+                <p id="responsivaEquipoInfo" style="margin: 0 0 8px 0; font-weight: 600; color: #166534;"></p>
+                <p id="responsivaEmpleadoInfo" style="margin: 0; color: #15803d; font-size: 13px;"></p>
+            </div>
+            
+            <div class="form-section-title" style="font-size: 13px; color: var(--text-secondary); margin-bottom: 12px; border-bottom: 1px solid var(--border); padding-bottom: 6px;">
+                📝 Datos del Equipo (llenar manualmente)
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">Descripción del Equipo</label>
+                    <input type="text" id="resp_descripcion" class="form-input" value="Prestamo" placeholder="Ej: Prestamo, Asignación">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Procesador</label>
+                    <input type="text" id="resp_procesador" class="form-input" placeholder="Ej: Intel Core i7-1355U">
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">Pantalla</label>
+                    <input type="text" id="resp_pantalla" class="form-input" placeholder="Ej: 14&quot;">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Memoria RAM</label>
+                    <input type="text" id="resp_memoria" class="form-input" placeholder="Ej: 16 GB">
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">Disco Duro</label>
+                    <input type="text" id="resp_disco" class="form-input" placeholder="Ej: 512 SSD">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">DVD/RW</label>
+                    <select id="resp_dvd" class="form-select">
+                        <option value="NO">NO</option>
+                        <option value="SI">SI</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">Sistema Operativo</label>
+                    <input type="text" id="resp_so" class="form-input" placeholder="Ej: Windows 11 Professional">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Quien Entrega</label>
+                    <input type="text" id="resp_entrega" class="form-input" value="Nelson Rios Rengifo">
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer" style="display: flex; gap: 10px; justify-content: flex-end;">
+            <button class="btn-cancel" onclick="cerrarModalResponsiva()">Cancelar</button>
+            <button class="btn-save" onclick="generarResponsivaPDF()" style="background: linear-gradient(135deg, #0ea5e9, #0284c7);">
+                📄 Generar PDF
+            </button>
+            <button class="btn-save" onclick="enviarResponsivaCorreo()" style="background: linear-gradient(135deg, #10b981, #059669);">
+                📧 Enviar por Correo
+            </button>
+        </div>
+    </div>
+</div>
+
 <!-- Toast -->
 <div class="toast" id="toast"></div>
 
@@ -993,6 +1072,9 @@ function renderizarTabla() {
                             </button>
                         ` : ''}
                         ${eq.estado === 'asignado' ? `
+                            <button class="btn-icon" onclick="abrirModalResponsiva('${eq.id}')" title="Generar Responsiva" style="background: #dbeafe; color: #1e40af;">
+                                📋
+                            </button>
                             <button class="btn-icon" onclick="desasignarEquipo('${eq.id}')" title="Desasignar">
                                 ↩️
                             </button>
@@ -1208,6 +1290,136 @@ async function desasignarEquipo(id) {
             mostrarToast(error.detail || 'Error al desasignar', 'error');
         }
     } catch (error) {
+        mostrarToast('Error de conexión', 'error');
+    }
+}
+
+// ========================================
+// RESPONSIVA DE EQUIPO
+// ========================================
+function abrirModalResponsiva(id) {
+    const equipo = equipos.find(e => e.id === id);
+    if (!equipo) return;
+    
+    document.getElementById('responsivaEquipoId').value = id;
+    document.getElementById('responsivaEquipoInfo').textContent = 
+        `💻 ${equipo.marca || ''} ${equipo.modelo || ''} - Serie: ${equipo.numero_serie || 'N/A'}`;
+    document.getElementById('responsivaEmpleadoInfo').textContent = 
+        `👤 Asignado a: ${equipo.empleado_nombre || 'Sin asignar'}`;
+    
+    // Limpiar campos
+    document.getElementById('resp_descripcion').value = 'Prestamo';
+    document.getElementById('resp_procesador').value = '';
+    document.getElementById('resp_pantalla').value = '';
+    document.getElementById('resp_memoria').value = '';
+    document.getElementById('resp_disco').value = '';
+    document.getElementById('resp_dvd').value = 'NO';
+    document.getElementById('resp_so').value = '';
+    document.getElementById('resp_entrega').value = 'Nelson Rios Rengifo';
+    
+    // Pre-llenar con especificaciones del equipo si existen
+    if (equipo.especificaciones) {
+        const specs = equipo.especificaciones;
+        // Intentar parsear especificaciones comunes
+        const procesadorMatch = specs.match(/(?:intel|amd|core|ryzen)[^,\n]*/i);
+        const ramMatch = specs.match(/(\d+)\s*(?:gb|gigas?)\s*(?:ram)?/i);
+        const discoMatch = specs.match(/(\d+)\s*(?:gb|tb|ssd|hdd)[^,\n]*/i);
+        
+        if (procesadorMatch) document.getElementById('resp_procesador').value = procesadorMatch[0].trim();
+        if (ramMatch) document.getElementById('resp_memoria').value = ramMatch[0].trim();
+        if (discoMatch) document.getElementById('resp_disco').value = discoMatch[0].trim();
+    }
+    
+    document.getElementById('modalResponsiva').classList.add('show');
+}
+
+function cerrarModalResponsiva() {
+    document.getElementById('modalResponsiva').classList.remove('show');
+}
+
+function getDatosResponsiva() {
+    return {
+        descripcion_equipo: document.getElementById('resp_descripcion').value || 'Prestamo',
+        procesador: document.getElementById('resp_procesador').value,
+        pantalla: document.getElementById('resp_pantalla').value,
+        memoria_ram: document.getElementById('resp_memoria').value,
+        disco_duro: document.getElementById('resp_disco').value,
+        dvd_rw: document.getElementById('resp_dvd').value,
+        sistema_operativo: document.getElementById('resp_so').value,
+        nombre_entrega: document.getElementById('resp_entrega').value || 'Nelson Rios Rengifo'
+    };
+}
+
+async function generarResponsivaPDF() {
+    const equipoId = document.getElementById('responsivaEquipoId').value;
+    const datos = getDatosResponsiva();
+    
+    try {
+        mostrarToast('Generando PDF...', 'success');
+        
+        const response = await fetch(`/api/inventario/${equipoId}/responsiva/generar`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(datos)
+        });
+        
+        if (response.ok) {
+            // Descargar el PDF
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            
+            // Obtener nombre del archivo del header
+            const contentDisposition = response.headers.get('Content-Disposition');
+            let filename = 'Responsiva.pdf';
+            if (contentDisposition) {
+                const match = contentDisposition.match(/filename=(.+)/);
+                if (match) filename = match[1];
+            }
+            
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+            
+            mostrarToast('PDF generado correctamente', 'success');
+        } else {
+            const error = await response.json();
+            mostrarToast(error.detail || 'Error al generar PDF', 'error');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        mostrarToast('Error de conexión', 'error');
+    }
+}
+
+async function enviarResponsivaCorreo() {
+    const equipoId = document.getElementById('responsivaEquipoId').value;
+    const datos = getDatosResponsiva();
+    
+    if (!confirm('¿Enviar la responsiva por correo al empleado y al administrador?')) return;
+    
+    try {
+        mostrarToast('Enviando correos...', 'success');
+        
+        const response = await fetch(`/api/inventario/${equipoId}/responsiva/enviar`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(datos)
+        });
+        
+        if (response.ok) {
+            const result = await response.json();
+            mostrarToast(`Responsiva enviada a ${result.enviado_a_empleado}`, 'success');
+            cerrarModalResponsiva();
+        } else {
+            const error = await response.json();
+            mostrarToast(error.detail || 'Error al enviar', 'error');
+        }
+    } catch (error) {
+        console.error('Error:', error);
         mostrarToast('Error de conexión', 'error');
     }
 }

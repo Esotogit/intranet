@@ -1,0 +1,801 @@
+{% extends "base.html" %}
+
+{% block title %}Gestión de Correos - Administración{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Page Header Compacto */
+    .page-header-card {
+        background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+        border-radius: 12px;
+        padding: 18px 24px;
+        color: white;
+        margin-bottom: 16px;
+        position: relative;
+        overflow: hidden;
+    }
+    .page-header-card::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -10%;
+        width: 300px;
+        height: 300px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 50%;
+    }
+    .page-header-card h1 { font-size: 20px; font-weight: 700; margin-bottom: 2px; position: relative; z-index: 1; }
+    .page-header-card p { opacity: 0.85; font-size: 13px; position: relative; z-index: 1; }
+    
+    /* Secciones */
+    .section-card {
+        background: white;
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 16px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        border: 1px solid var(--border);
+    }
+    
+    .section-title {
+        font-size: 15px;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: 16px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    /* Config SMTP */
+    .config-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 16px;
+    }
+    
+    .config-item {
+        background: #f8fafc;
+        border-radius: 8px;
+        padding: 12px;
+    }
+    
+    .config-item label {
+        display: block;
+        font-size: 11px;
+        color: var(--text-secondary);
+        text-transform: uppercase;
+        margin-bottom: 4px;
+    }
+    
+    .config-item span {
+        font-size: 14px;
+        font-weight: 500;
+        color: var(--text-primary);
+    }
+    
+    .config-status {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+    }
+    
+    .config-status.ok {
+        background: #d1fae5;
+        color: #065f46;
+    }
+    
+    .config-status.error {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+    
+    /* Formulario de prueba */
+    .test-form {
+        display: flex;
+        gap: 12px;
+        align-items: flex-end;
+        flex-wrap: wrap;
+    }
+    
+    .test-form .form-group {
+        flex: 1;
+        min-width: 250px;
+    }
+    
+    .form-group label {
+        display: block;
+        font-size: 12px;
+        font-weight: 500;
+        color: var(--text-secondary);
+        margin-bottom: 6px;
+    }
+    
+    .form-input {
+        width: 100%;
+        padding: 10px 14px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        font-size: 14px;
+        transition: all 0.2s;
+    }
+    
+    .form-input:focus {
+        outline: none;
+        border-color: #6366f1;
+        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+    }
+    
+    .btn-test {
+        padding: 10px 20px;
+        background: linear-gradient(135deg, #6366f1, #4f46e5);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        transition: all 0.2s;
+    }
+    
+    .btn-test:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+    }
+    
+    .btn-test:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none;
+    }
+    
+    /* Lista de plantillas */
+    .plantillas-list {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+    
+    .plantilla-item {
+        background: #f8fafc;
+        border-radius: 10px;
+        padding: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        transition: all 0.2s;
+        border: 1px solid transparent;
+    }
+    
+    .plantilla-item:hover {
+        border-color: #6366f1;
+        background: #f5f3ff;
+    }
+    
+    .plantilla-info {
+        flex: 1;
+    }
+    
+    .plantilla-nombre {
+        font-weight: 600;
+        color: var(--text-primary);
+        font-size: 14px;
+        margin-bottom: 4px;
+    }
+    
+    .plantilla-desc {
+        font-size: 12px;
+        color: var(--text-secondary);
+    }
+    
+    .plantilla-variables {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+        margin-top: 8px;
+    }
+    
+    .var-tag {
+        background: #e0e7ff;
+        color: #4338ca;
+        padding: 2px 8px;
+        border-radius: 10px;
+        font-size: 10px;
+        font-family: monospace;
+    }
+    
+    .plantilla-actions {
+        display: flex;
+        gap: 8px;
+    }
+    
+    .btn-action {
+        padding: 8px 14px;
+        border-radius: 6px;
+        font-size: 12px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+        border: none;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+    
+    .btn-edit {
+        background: #dbeafe;
+        color: #1e40af;
+    }
+    
+    .btn-edit:hover {
+        background: #bfdbfe;
+    }
+    
+    .btn-preview {
+        background: #f3e8ff;
+        color: #7c3aed;
+    }
+    
+    .btn-preview:hover {
+        background: #e9d5ff;
+    }
+    
+    .btn-send {
+        background: #d1fae5;
+        color: #065f46;
+    }
+    
+    .btn-send:hover {
+        background: #a7f3d0;
+    }
+    
+    /* Modal */
+    .modal-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 1000;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+    }
+    
+    .modal-overlay.show {
+        display: flex;
+    }
+    
+    .modal {
+        background: white;
+        border-radius: 16px;
+        width: 100%;
+        max-width: 900px;
+        max-height: 90vh;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .modal-header {
+        padding: 20px 24px;
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .modal-header h3 {
+        font-size: 18px;
+        font-weight: 600;
+        margin: 0;
+    }
+    
+    .modal-close {
+        background: none;
+        border: none;
+        font-size: 24px;
+        cursor: pointer;
+        color: var(--text-secondary);
+    }
+    
+    .modal-body {
+        padding: 24px;
+        overflow-y: auto;
+        flex: 1;
+    }
+    
+    .modal-footer {
+        padding: 16px 24px;
+        border-top: 1px solid var(--border);
+        display: flex;
+        justify-content: flex-end;
+        gap: 12px;
+    }
+    
+    .btn-cancel {
+        padding: 10px 20px;
+        background: #f1f5f9;
+        color: var(--text-secondary);
+        border: none;
+        border-radius: 8px;
+        font-size: 14px;
+        cursor: pointer;
+    }
+    
+    .btn-save {
+        padding: 10px 20px;
+        background: linear-gradient(135deg, #6366f1, #4f46e5);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+    }
+    
+    /* Editor de plantilla */
+    .editor-section {
+        margin-bottom: 20px;
+    }
+    
+    .editor-section label {
+        display: block;
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: 8px;
+    }
+    
+    .editor-textarea {
+        width: 100%;
+        min-height: 300px;
+        padding: 12px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        font-family: 'Monaco', 'Menlo', monospace;
+        font-size: 12px;
+        line-height: 1.5;
+        resize: vertical;
+    }
+    
+    .editor-textarea:focus {
+        outline: none;
+        border-color: #6366f1;
+    }
+    
+    .variables-help {
+        background: #fffbeb;
+        border-radius: 8px;
+        padding: 12px;
+        margin-top: 12px;
+    }
+    
+    .variables-help h4 {
+        font-size: 12px;
+        color: #92400e;
+        margin: 0 0 8px 0;
+    }
+    
+    .variables-help code {
+        background: #fef3c7;
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-size: 11px;
+        margin: 2px;
+        display: inline-block;
+    }
+    
+    /* Preview */
+    .preview-frame {
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        min-height: 400px;
+        background: white;
+    }
+    
+    .preview-frame iframe {
+        width: 100%;
+        height: 400px;
+        border: none;
+        border-radius: 8px;
+    }
+    
+    /* Toast */
+    .toast {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        padding: 14px 24px;
+        border-radius: 10px;
+        color: white;
+        font-size: 14px;
+        font-weight: 500;
+        transform: translateY(100px);
+        opacity: 0;
+        transition: all 0.3s;
+        z-index: 2000;
+    }
+    
+    .toast.show {
+        transform: translateY(0);
+        opacity: 1;
+    }
+    
+    .toast.success { background: linear-gradient(135deg, #10b981, #059669); }
+    .toast.error { background: linear-gradient(135deg, #ef4444, #dc2626); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header-card">
+    <h1>📧 Gestión de Correos</h1>
+    <p>Configuración SMTP y plantillas de notificaciones</p>
+</div>
+
+<!-- Configuración SMTP -->
+<div class="section-card">
+    <h2 class="section-title">⚙️ Configuración SMTP</h2>
+    
+    <div class="config-grid" id="smtpConfig">
+        <div class="config-item">
+            <label>Servidor</label>
+            <span id="configHost">-</span>
+        </div>
+        <div class="config-item">
+            <label>Puerto</label>
+            <span id="configPort">-</span>
+        </div>
+        <div class="config-item">
+            <label>Usuario</label>
+            <span id="configUser">-</span>
+        </div>
+        <div class="config-item">
+            <label>SSL</label>
+            <span id="configSSL">-</span>
+        </div>
+        <div class="config-item">
+            <label>Remitente</label>
+            <span id="configFrom">-</span>
+        </div>
+        <div class="config-item">
+            <label>Estado</label>
+            <span id="configStatus" class="config-status">-</span>
+        </div>
+    </div>
+</div>
+
+<!-- Correo de Prueba -->
+<div class="section-card">
+    <h2 class="section-title">🧪 Enviar Correo de Prueba</h2>
+    
+    <div class="test-form">
+        <div class="form-group">
+            <label>Correo destinatario</label>
+            <input type="email" id="testEmail" class="form-input" placeholder="correo@ejemplo.com">
+        </div>
+        <button class="btn-test" onclick="enviarCorreoPrueba()" id="btnEnviarPrueba">
+            📤 Enviar Prueba
+        </button>
+    </div>
+</div>
+
+<!-- Plantillas de Correo -->
+<div class="section-card">
+    <h2 class="section-title">📋 Plantillas de Notificaciones</h2>
+    
+    <div class="plantillas-list" id="plantillasList">
+        <p style="color: var(--text-secondary); text-align: center; padding: 20px;">Cargando plantillas...</p>
+    </div>
+</div>
+
+<!-- Modal Editar Plantilla -->
+<div class="modal-overlay" id="modalEditar">
+    <div class="modal">
+        <div class="modal-header">
+            <h3 id="modalEditarTitle">Editar Plantilla</h3>
+            <button class="modal-close" onclick="cerrarModalEditar()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <input type="hidden" id="editCodigo">
+            
+            <div class="editor-section">
+                <label>Asunto del correo</label>
+                <input type="text" id="editAsunto" class="form-input" placeholder="Asunto del correo">
+            </div>
+            
+            <div class="editor-section">
+                <label>Contenido HTML</label>
+                <textarea id="editContenido" class="editor-textarea" placeholder="Contenido HTML de la plantilla"></textarea>
+            </div>
+            
+            <div class="variables-help" id="variablesHelp">
+                <h4>📌 Variables disponibles:</h4>
+                <div id="variablesList"></div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-cancel" onclick="cerrarModalEditar()">Cancelar</button>
+            <button class="btn-save" onclick="guardarPlantilla()">💾 Guardar Cambios</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Preview -->
+<div class="modal-overlay" id="modalPreview">
+    <div class="modal">
+        <div class="modal-header">
+            <h3 id="previewTitle">Vista Previa</h3>
+            <button class="modal-close" onclick="cerrarModalPreview()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <p style="margin-bottom: 12px;"><strong>Asunto:</strong> <span id="previewAsunto"></span></p>
+            <div class="preview-frame">
+                <iframe id="previewFrame"></iframe>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-cancel" onclick="cerrarModalPreview()">Cerrar</button>
+            <button class="btn-save" onclick="enviarPlantillaPrueba()" style="background: linear-gradient(135deg, #10b981, #059669);">
+                📧 Enviar como Prueba
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let plantillas = [];
+let plantillaActual = null;
+
+document.addEventListener('DOMContentLoaded', () => {
+    cargarConfiguracion();
+    cargarPlantillas();
+});
+
+async function cargarConfiguracion() {
+    try {
+        const response = await fetch('/api/correos/configuracion');
+        if (response.ok) {
+            const config = await response.json();
+            
+            document.getElementById('configHost').textContent = config.host || '-';
+            document.getElementById('configPort').textContent = config.port || '-';
+            document.getElementById('configUser').textContent = config.user || '-';
+            document.getElementById('configSSL').textContent = config.use_ssl ? 'Sí' : 'No';
+            document.getElementById('configFrom').textContent = `${config.email_from_name} <${config.email_from}>`;
+            
+            const statusEl = document.getElementById('configStatus');
+            if (config.configurado) {
+                statusEl.className = 'config-status ok';
+                statusEl.innerHTML = '✅ Configurado';
+            } else {
+                statusEl.className = 'config-status error';
+                statusEl.innerHTML = '❌ Sin configurar';
+            }
+        }
+    } catch (error) {
+        console.error('Error:', error);
+    }
+}
+
+async function cargarPlantillas() {
+    const container = document.getElementById('plantillasList');
+    
+    try {
+        const response = await fetch('/api/correos/plantillas');
+        if (response.ok) {
+            plantillas = await response.json();
+            
+            if (plantillas.length === 0) {
+                container.innerHTML = '<p style="color: var(--text-secondary); text-align: center; padding: 20px;">No hay plantillas configuradas. Ejecuta el SQL de plantillas_correo.sql</p>';
+                return;
+            }
+            
+            container.innerHTML = plantillas.map(p => `
+                <div class="plantilla-item">
+                    <div class="plantilla-info">
+                        <div class="plantilla-nombre">${getIconoPlantilla(p.codigo)} ${p.nombre}</div>
+                        <div class="plantilla-desc">${p.descripcion || ''}</div>
+                        <div class="plantilla-variables">
+                            ${(p.variables_disponibles || []).map(v => `<span class="var-tag">{${v}}</span>`).join('')}
+                        </div>
+                    </div>
+                    <div class="plantilla-actions">
+                        <button class="btn-action btn-preview" onclick="verPreview('${p.codigo}')">👁️ Preview</button>
+                        <button class="btn-action btn-edit" onclick="editarPlantilla('${p.codigo}')">✏️ Editar</button>
+                        <button class="btn-action btn-send" onclick="prepararEnvio('${p.codigo}')">📧 Probar</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        container.innerHTML = '<p style="color: #ef4444; text-align: center; padding: 20px;">Error al cargar plantillas</p>';
+    }
+}
+
+function getIconoPlantilla(codigo) {
+    const iconos = {
+        'recibo_nomina': '💰',
+        'recordatorio_actividades': '📋',
+        'vacaciones_aprobada': '✅',
+        'vacaciones_rechazada': '❌',
+        'nuevo_anuncio': '📢'
+    };
+    return iconos[codigo] || '📧';
+}
+
+async function enviarCorreoPrueba() {
+    const email = document.getElementById('testEmail').value.trim();
+    
+    if (!email) {
+        mostrarToast('Ingresa un correo destinatario', 'error');
+        return;
+    }
+    
+    const btn = document.getElementById('btnEnviarPrueba');
+    btn.disabled = true;
+    btn.innerHTML = '⏳ Enviando...';
+    
+    try {
+        const response = await fetch('/api/correos/prueba', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ destinatario: email })
+        });
+        
+        const result = await response.json();
+        
+        if (response.ok) {
+            mostrarToast(`Correo enviado a ${email}`, 'success');
+        } else {
+            mostrarToast(result.detail || 'Error al enviar', 'error');
+        }
+    } catch (error) {
+        mostrarToast('Error de conexión', 'error');
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '📤 Enviar Prueba';
+    }
+}
+
+async function editarPlantilla(codigo) {
+    const plantilla = plantillas.find(p => p.codigo === codigo);
+    if (!plantilla) return;
+    
+    plantillaActual = plantilla;
+    
+    document.getElementById('editCodigo').value = codigo;
+    document.getElementById('modalEditarTitle').textContent = `Editar: ${plantilla.nombre}`;
+    document.getElementById('editAsunto').value = plantilla.asunto;
+    document.getElementById('editContenido').value = plantilla.contenido_html;
+    
+    // Mostrar variables disponibles
+    const variablesList = document.getElementById('variablesList');
+    variablesList.innerHTML = (plantilla.variables_disponibles || []).map(v => 
+        `<code>{${v}}</code>`
+    ).join(' ');
+    
+    document.getElementById('modalEditar').classList.add('show');
+}
+
+function cerrarModalEditar() {
+    document.getElementById('modalEditar').classList.remove('show');
+    plantillaActual = null;
+}
+
+async function guardarPlantilla() {
+    const codigo = document.getElementById('editCodigo').value;
+    const asunto = document.getElementById('editAsunto').value.trim();
+    const contenido = document.getElementById('editContenido').value;
+    
+    if (!asunto || !contenido) {
+        mostrarToast('Completa todos los campos', 'error');
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/api/correos/plantillas/${codigo}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                asunto: asunto,
+                contenido_html: contenido
+            })
+        });
+        
+        if (response.ok) {
+            mostrarToast('Plantilla actualizada correctamente', 'success');
+            cerrarModalEditar();
+            cargarPlantillas();
+        } else {
+            const error = await response.json();
+            mostrarToast(error.detail || 'Error al guardar', 'error');
+        }
+    } catch (error) {
+        mostrarToast('Error de conexión', 'error');
+    }
+}
+
+async function verPreview(codigo) {
+    try {
+        const response = await fetch(`/api/correos/plantillas/${codigo}/preview`, {
+            method: 'POST'
+        });
+        
+        if (response.ok) {
+            const preview = await response.json();
+            plantillaActual = { codigo };
+            
+            document.getElementById('previewTitle').textContent = `Vista Previa: ${codigo}`;
+            document.getElementById('previewAsunto').textContent = preview.asunto;
+            
+            // Cargar HTML en iframe
+            const iframe = document.getElementById('previewFrame');
+            iframe.srcdoc = preview.contenido_html;
+            
+            document.getElementById('modalPreview').classList.add('show');
+        }
+    } catch (error) {
+        mostrarToast('Error al cargar preview', 'error');
+    }
+}
+
+function cerrarModalPreview() {
+    document.getElementById('modalPreview').classList.remove('show');
+}
+
+function prepararEnvio(codigo) {
+    plantillaActual = { codigo };
+    verPreview(codigo);
+}
+
+async function enviarPlantillaPrueba() {
+    if (!plantillaActual) return;
+    
+    const email = prompt('Ingresa el correo destinatario para la prueba:');
+    if (!email) return;
+    
+    try {
+        const response = await fetch(`/api/correos/plantillas/${plantillaActual.codigo}/enviar-prueba`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ destinatario: email })
+        });
+        
+        if (response.ok) {
+            mostrarToast(`Plantilla enviada a ${email}`, 'success');
+            cerrarModalPreview();
+        } else {
+            const error = await response.json();
+            mostrarToast(error.detail || 'Error al enviar', 'error');
+        }
+    } catch (error) {
+        mostrarToast('Error de conexión', 'error');
+    }
+}
+
+function mostrarToast(mensaje, tipo = 'success') {
+    const toast = document.getElementById('toast');
+    toast.textContent = mensaje;
+    toast.className = `toast show ${tipo}`;
+    setTimeout(() => toast.classList.remove('show'), 3000);
+}
+</script>
+{% endblock %}

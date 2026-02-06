@@ -10,7 +10,7 @@ from app.models import (
     EmpleadoCompleto,
     TokenData
 )
-from app.auth import get_current_user, get_current_admin, get_password_hash
+from app.auth import get_current_user, get_current_admin, get_password_hash, get_inventario_user
 
 router = APIRouter(prefix="/api/empleados", tags=["Empleados"])
 
@@ -33,9 +33,9 @@ async def get_mi_perfil(current_user: TokenData = Depends(get_current_user)):
 @router.get("/", response_model=List[EmpleadoCompleto])
 async def listar_empleados(
     activo: bool = True,
-    current_user: TokenData = Depends(get_current_admin)
+    current_user: TokenData = Depends(get_inventario_user)
 ):
-    """Listar todos los empleados (solo admin)"""
+    """Listar todos los empleados (admin o inventario)"""
     
     query = supabase.table("v_empleados_completo").select("*")
     
