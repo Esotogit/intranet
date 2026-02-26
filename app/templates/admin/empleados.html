@@ -1052,8 +1052,16 @@
                         <div class="expediente-value" id="fichaExpNombre">-</div>
                     </div>
                     <div class="expediente-row">
-                        <div class="expediente-label">Correo Electrónico</div>
+                        <div class="expediente-label">Correo Empresa</div>
                         <div class="expediente-value highlight" id="fichaExpEmail">-</div>
+                    </div>
+                    <div class="expediente-row">
+                        <div class="expediente-label">Correo Personal</div>
+                        <div class="expediente-value" id="fichaExpCorreoPersonal">-</div>
+                    </div>
+                    <div class="expediente-row">
+                        <div class="expediente-label">Teléfono Personal</div>
+                        <div class="expediente-value" id="fichaExpTelefono">-</div>
                     </div>
                     <div class="expediente-row">
                         <div class="expediente-label">Rol</div>
@@ -1066,6 +1074,29 @@
                         <div class="expediente-value" id="fichaExpEstado">
                             <span class="expediente-badge active">Activo</span>
                         </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Datos Fiscales -->
+            <div class="expediente-section">
+                <div class="expediente-section-header">Datos Fiscales / IMSS</div>
+                <div class="expediente-content">
+                    <div class="expediente-row">
+                        <div class="expediente-label">No. Empleado</div>
+                        <div class="expediente-value" id="fichaExpNumEmpleado">-</div>
+                    </div>
+                    <div class="expediente-row">
+                        <div class="expediente-label">R.F.C.</div>
+                        <div class="expediente-value" id="fichaExpRFC">-</div>
+                    </div>
+                    <div class="expediente-row">
+                        <div class="expediente-label">CURP</div>
+                        <div class="expediente-value" id="fichaExpCURP">-</div>
+                    </div>
+                    <div class="expediente-row">
+                        <div class="expediente-label">NSS (IMSS)</div>
+                        <div class="expediente-value" id="fichaExpNSS">-</div>
                     </div>
                 </div>
             </div>
@@ -1089,6 +1120,10 @@
                     <div class="expediente-row">
                         <div class="expediente-label">Fecha de Ingreso</div>
                         <div class="expediente-value" id="fichaExpIngreso">-</div>
+                    </div>
+                    <div class="expediente-row" id="rowFechaBaja" style="display: none;">
+                        <div class="expediente-label">Fecha de Baja</div>
+                        <div class="expediente-value" id="fichaExpBaja" style="color: #dc2626;">-</div>
                     </div>
                 </div>
             </div>
@@ -1522,6 +1557,8 @@ async function verFichaEmpleado(id) {
     // Datos Personales
     document.getElementById('fichaExpNombre').textContent = emp.nombre_completo;
     document.getElementById('fichaExpEmail').textContent = emp.email;
+    document.getElementById('fichaExpCorreoPersonal').textContent = emp.correo_personal || '-';
+    document.getElementById('fichaExpTelefono').textContent = emp.telefono_personal || '-';
     
     // Rol
     const rolTexto = emp.rol === 'admin' || emp.es_admin 
@@ -1536,11 +1573,25 @@ async function verFichaEmpleado(id) {
         ? '<span class="expediente-badge active">✓ Activo</span>'
         : '<span class="expediente-badge inactive">✗ Inactivo</span>';
     
+    // Datos Fiscales / IMSS
+    document.getElementById('fichaExpNumEmpleado').textContent = emp.numero_empleado || '-';
+    document.getElementById('fichaExpRFC').textContent = emp.rfc || '-';
+    document.getElementById('fichaExpCURP').textContent = emp.curp || '-';
+    document.getElementById('fichaExpNSS').textContent = emp.nss || '-';
+    
     // Datos Laborales
     document.getElementById('fichaExpPuesto').textContent = emp.puesto || 'Sin asignar';
     document.getElementById('fichaExpSupervisor').textContent = emp.supervisor || 'Sin asignar';
     document.getElementById('fichaExpProyecto').textContent = emp.proyecto || 'Sin asignar';
     document.getElementById('fichaExpIngreso').textContent = emp.fecha_ingreso ? formatearFecha(emp.fecha_ingreso) : 'No registrada';
+    
+    // Fecha de Baja (solo mostrar si existe)
+    if (emp.fecha_baja) {
+        document.getElementById('rowFechaBaja').style.display = 'flex';
+        document.getElementById('fichaExpBaja').textContent = formatearFecha(emp.fecha_baja);
+    } else {
+        document.getElementById('rowFechaBaja').style.display = 'none';
+    }
     
     // Vacaciones
     document.getElementById('fichaExpVacaciones').textContent = `${emp.dias_vacaciones || 0} días`;

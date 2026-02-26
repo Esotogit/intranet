@@ -140,6 +140,7 @@ class Empleado(BaseModel):
     email: str
     nombre: str
     apellidos: str
+    numero_empleado: Optional[str] = None
     puesto_id: Optional[int] = None
     supervisor_id: Optional[int] = None
     proyecto_id: Optional[int] = None
@@ -148,6 +149,13 @@ class Empleado(BaseModel):
     rol: str = 'usuario'
     es_admin: bool = False
     activo: bool = True
+    # Campos adicionales
+    correo_personal: Optional[str] = None
+    telefono_personal: Optional[str] = None
+    rfc: Optional[str] = None
+    nss: Optional[str] = None
+    curp: Optional[str] = None
+    fecha_baja: Optional[str] = None
     created_at: Optional[str] = None
 
     class Config:
@@ -161,6 +169,7 @@ class EmpleadoCompleto(BaseModel):
     nombre: str
     apellidos: str
     nombre_completo: str
+    numero_empleado: Optional[str] = None
     puesto: Optional[str] = None
     supervisor: Optional[str] = None
     proyecto: Optional[str] = None
@@ -169,6 +178,13 @@ class EmpleadoCompleto(BaseModel):
     rol: str = 'usuario'
     es_admin: bool
     activo: bool
+    # Campos adicionales
+    correo_personal: Optional[str] = None
+    telefono_personal: Optional[str] = None
+    rfc: Optional[str] = None
+    nss: Optional[str] = None
+    curp: Optional[str] = None
+    fecha_baja: Optional[str] = None
 
     class Config:
         from_attributes = True

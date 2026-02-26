@@ -165,14 +165,35 @@ async def actualizar_empleado(
 ):
     """Actualizar un empleado (solo admin)"""
     
-    # Filtrar campos no nulos
-    update_data = {k: v for k, v in empleado.model_dump().items() if v is not None}
+    # Obtener los campos que fueron enviados (incluyendo None para limpiar)
+    update_data = {}
+    datos_enviados = empleado.model_dump()
+    
+    # Lista de campos que pueden ser limpiados (establecidos a null)
+    campos_limpiables = [
+        'correo_personal', 'telefono_personal', 'rfc', 'nss', 'curp', 
+        'fecha_baja', 'numero_empleado', 'puesto_id', 'supervisor_id', 'proyecto_id'
+    ]
+    
+    for k, v in datos_enviados.items():
+        # Incluir el campo si tiene valor O si es un campo limpiable
+        if v is not None or k in campos_limpiables:
+            update_data[k] = v
+    
+    # Remover campos que realmente no queremos actualizar (None y no fueron enviados explícitamente)
+    # Para campos requeridos como nombre/apellidos, solo incluir si tienen valor
+    if update_data.get('nombre') is None:
+        update_data.pop('nombre', None)
+    if update_data.get('apellidos') is None:
+        update_data.pop('apellidos', None)
     
     if not update_data:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="No hay datos para actualizar"
         )
+    
+    print(f"[DEBUG] Actualizando empleado {empleado_id} con: {update_data}")
     
     result = supabase.table("empleados").update(update_data).eq("id", empleado_id).execute()
     
